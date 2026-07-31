@@ -1,5 +1,5 @@
 import env from '../env.ts';
-import app from './server.ts';
+import app from './app.ts';
 
 import { logger } from './lib/logger.ts';
 

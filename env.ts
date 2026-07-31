@@ -1,5 +1,4 @@
 import path from 'node:path';
-
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
@@ -19,7 +18,16 @@ const envSchema = z.object({
 
   PORT: z.coerce.number().positive().default(3000),
   HOST: z.string().default('localhost'),
-  CORS_ORIGINS: z.string().default('*'),
+  CORS_ORIGIN: z
+    .string()
+    .or(z.array(z.string()))
+    .transform(val => {
+      if (typeof val === 'string') {
+        return val.split(',').map(origin => origin.trim());
+      }
+      return val;
+    })
+    .default([]),
 
   DATABASE_URL: z.string().startsWith('postgresql://'),
 });
@@ -33,7 +41,7 @@ try {
 } catch (error) {
   if (error instanceof z.ZodError) {
     console.error('❌ Invalid environment variables:');
-    console.error(JSON.stringify(error.flatten().fieldErrors, null, 2));
+    console.error(JSON.stringify(z.flattenError(error).fieldErrors, null, 2));
 
     error.issues.forEach(err => {
       const path = err.path.join('.');
