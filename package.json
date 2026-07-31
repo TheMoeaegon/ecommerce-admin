@@ -7,15 +7,12 @@
     "dev": "node --watch --env-file=.env.dev src/index.ts",
     "start": "node --env-file=.env src/index.ts",
     "test": "APP_STAGE=test vitest run",
+    "test:coverage": "vitest run --coverage",
     "check-connection": "APP_STAGE=dev node scripts/test-db.ts",
     "type-check": "tsc --project tsconfig.build.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "APP_STAGE=dev drizzle-kit push"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TheMoeaegon/Commerce-Core.git"
   },
   "keywords": [],
   "author": "TheMoeaegon",
