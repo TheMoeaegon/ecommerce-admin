@@ -27,6 +27,8 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
+    "@scalar/express-api-reference": "^0.10.12",
     "better-auth": "^1.6.25",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
