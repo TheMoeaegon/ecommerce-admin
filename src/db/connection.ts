@@ -12,5 +12,5 @@ const createPool = () => {
 
 let client = createPool();
 
-export const db = drizzle({ client });
+export const db = drizzle({ client, schema });
 export default db;
