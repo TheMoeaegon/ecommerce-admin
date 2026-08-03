@@ -2,15 +2,31 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 
 import db from '../db/connection.ts';
-import { openAPI } from 'better-auth/plugins';
+import { openAPI, phoneNumber } from 'better-auth/plugins';
 
 export const auth = betterAuth({
   basePath: '/api/v1/auth',
   database: drizzleAdapter(db, {
     provider: 'pg',
   }),
+  trustedOrigins: ['http://localhost:3000'],
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
+  },
+  user: {
+    additionalFields: {
+      firstName: {
+        type: 'string',
+        required: true,
+        input: true,
+      },
+      lastName: {
+        type: 'string',
+        required: true,
+        input: true,
+      },
+    },
   },
   socialProviders: {
     google: {
@@ -18,5 +34,5 @@ export const auth = betterAuth({
       clientSecret: '',
     },
   },
-  plugins: [openAPI()],
+  plugins: [openAPI(), phoneNumber()],
 });
