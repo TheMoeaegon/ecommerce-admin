@@ -20,12 +20,12 @@ app.use(
 );
 app.use(cookieParser());
 
+app.use(httpLogger);
 app.all('/api/v1/auth/{*any}', toNodeHandler(auth));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(httpLogger);
 app.use('/api/v1', router);
 
 app.use(notFoundHandler);

@@ -8,6 +8,10 @@ export const user = pgTable('user', {
   email: t.varchar('email', { length: 255 }).notNull().unique(),
   emailVerified: t.boolean('email_verified').notNull(),
   image: t.text('image'),
+  phoneNumber: t.varchar('phone_number', { length: 255 }).unique(),
+  firstName: t.varchar('first_name', { length: 255 }),
+  lastName: t.varchar('last_name', { length: 255 }),
+  phoneNumberVerified: t.boolean('phone_number_verified'),
   createdAt: t.timestamp('created_at', { precision: 6, withTimezone: true }).notNull(),
   updatedAt: t.timestamp('updated_at', { precision: 6, withTimezone: true }).notNull(),
 });
