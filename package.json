@@ -12,7 +12,8 @@
     "type-check": "tsc --project tsconfig.build.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "APP_STAGE=dev drizzle-kit push"
+    "db:push": "APP_STAGE=dev drizzle-kit push",
+    "db:seed": "node --env-file=.env.dev seed/seed.ts"
   },
   "keywords": [],
   "author": "TheMoeaegon",

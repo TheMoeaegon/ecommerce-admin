@@ -2,7 +2,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 
 import db from '../db/connection.ts';
-import { openAPI, phoneNumber } from 'better-auth/plugins';
+import { admin, openAPI, phoneNumber, username } from 'better-auth/plugins';
 
 export const auth = betterAuth({
   basePath: '/api/v1/auth',
@@ -34,5 +34,5 @@ export const auth = betterAuth({
       clientSecret: '',
     },
   },
-  plugins: [openAPI(), phoneNumber()],
+  plugins: [openAPI(), phoneNumber(), username(), admin()],
 });

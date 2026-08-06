@@ -1,5 +1,6 @@
 import { pgTable } from 'drizzle-orm/pg-core';
 import * as t from 'drizzle-orm/pg-core';
+import { unique, primaryKey } from 'drizzle-orm/pg-core';
 
 //better auth schema
 export const user = pgTable('user', {
@@ -12,6 +13,12 @@ export const user = pgTable('user', {
   firstName: t.varchar('first_name', { length: 255 }).notNull(),
   lastName: t.varchar('last_name', { length: 255 }).notNull(),
   phoneNumberVerified: t.boolean('phone_number_verified'),
+  username: t.varchar('username', { length: 255 }).unique(),
+  displayUsername: t.text('display_username'),
+  role: t.text('role'),
+  banned: t.boolean('banned'),
+  banReason: t.text('ban_reason'),
+  banExpires: t.timestamp('ban_expires', { precision: 6, withTimezone: true }),
   createdAt: t.timestamp('created_at', { precision: 6, withTimezone: true }).notNull(),
   updatedAt: t.timestamp('updated_at', { precision: 6, withTimezone: true }).notNull(),
 });
@@ -26,6 +33,7 @@ export const session = pgTable('session', {
   expiresAt: t.timestamp('expires_at', { precision: 6, withTimezone: true }).notNull(),
   ipAddress: t.text('ip_address'),
   userAgent: t.text('user_agent'),
+  impersonatedBy: t.text('impersonated_by'),
   createdAt: t.timestamp('created_at', { precision: 6, withTimezone: true }).notNull(),
   updatedAt: t.timestamp('updated_at', { precision: 6, withTimezone: true }).notNull(),
 });
@@ -59,3 +67,34 @@ export const verification = pgTable('verification', {
 });
 
 //better auth schema end
+
+export const roles = pgTable('roles', {
+  id: t.serial('id').primaryKey(),
+  name: t.varchar('name', { length: 100 }).notNull().unique(),
+  createdAt: t.timestamp('created_at').defaultNow().notNull(),
+});
+
+export const permissions = pgTable(
+  'permissions',
+  {
+    id: t.serial('id').primaryKey(),
+    resource: t.varchar('resource', { length: 100 }).notNull(),
+    action: t.varchar('action', { length: 50 }).notNull(),
+  },
+  t => [unique().on(t.resource, t.action)]
+);
+
+export const rolePermissions = pgTable(
+  'role_permissions',
+  {
+    roleId: t
+      .integer('role_id')
+      .notNull()
+      .references(() => roles.id, { onDelete: 'cascade' }),
+    permissionId: t
+      .integer('permission_id')
+      .notNull()
+      .references(() => permissions.id, { onDelete: 'cascade' }),
+  },
+  t => [primaryKey({ columns: [t.roleId, t.permissionId] })]
+);
