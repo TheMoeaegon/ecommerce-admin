@@ -5,7 +5,7 @@ import { healthResponseSchema } from '../schemas/health.schema.ts';
 
 registry.registerPath({
   method: 'get',
-  path: '/api/v1/health',
+  path: '/health',
   summary: '/api/v1/health',
   tags: ['System'],
   responses: {

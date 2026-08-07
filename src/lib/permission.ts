@@ -1,10 +1,10 @@
 import { defaultStatements } from 'better-auth/plugins/admin/access';
 
-export const permission = {
+export const statement = {
   ...defaultStatements,
   product: ['create', 'update', 'delete'],
 } as const;
 
-export const permissionRows = Object.entries(permission).flatMap(([resource, actions]) =>
+export const permissionRows = Object.entries(statement).flatMap(([resource, actions]) =>
   actions.map((action: string) => ({ resource, action }))
 );
