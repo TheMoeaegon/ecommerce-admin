@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 import { db } from '../../src/db/connection.ts';
 import { sql } from 'drizzle-orm';
+import { roles } from '../../src/db/schema.ts';
 
 export default async function setup() {
   console.log('🗄️  Setting up test database...');
@@ -9,7 +10,13 @@ export default async function setup() {
     // Order: Drop dependent tables first, then independent ones
     // Respecting CASCADE and FK constraints
 
-    // await db.execute(sql`DROP TABLE IF EXISTS mfa_trust CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS role_permissions CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS roles CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS permissions CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS verification CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS account CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS session CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS "user" CASCADE`);
     // Use drizzle-kit CLI to push schema to database
     console.log('🚀 Pushing schema using drizzle-kit...');
     execSync(
@@ -21,6 +28,7 @@ export default async function setup() {
     );
 
     console.log('✅ Test database setup complete');
+    await db.insert(roles).values([{ name: 'admin' }, { name: 'user' }]);
   } catch (err) {
     console.error('❌ Error setting up test database:', err);
     throw err;
@@ -30,7 +38,13 @@ export default async function setup() {
       console.log('🧹 Tearing down test database...');
 
       // like this drop all the table
-      // await db.execute(sql`DROP TABLE IF EXISTS mfa_trust CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS role_permissions CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS roles CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS permissions CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS verification CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS account CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS session CASCADE`);
+      await db.execute(sql`DROP TABLE IF EXISTS "user" CASCADE`);
 
       console.log('✅ Test database teardown complete');
       process.exit(0);

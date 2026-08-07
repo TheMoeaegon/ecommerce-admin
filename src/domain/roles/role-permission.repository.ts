@@ -19,7 +19,17 @@ export class RoleRepository extends BaseRepository {
       .from(roles)
       .$dynamic();
 
-    return await this.applyQueryOptions(qb, options).execute();
+    const qb2 = db
+      .select({ count: sql<number>`count(*)` })
+      .from(roles)
+      .$dynamic();
+
+    const [items, [{ count }]] = await Promise.all([
+      this.applyQueryOptions(qb, options).execute(),
+      this.applyQueryOptions(qb2, { where: options?.where }).execute(),
+    ]);
+
+    return { items, count };
   }
 
   static async findById() {}

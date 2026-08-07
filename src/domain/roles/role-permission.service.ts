@@ -17,8 +17,8 @@ export class RoleService {
       where: and(roleName ? ilike(roles.name, `%${roleName}%`) : undefined),
     };
 
-    const result = await RoleRepository.findMany(options);
+    const { items, count } = await RoleRepository.findMany(options);
 
-    return preparePaginatedResponse(result, page, pageSize);
+    return preparePaginatedResponse(items, count, page, pageSize);
   }
 }

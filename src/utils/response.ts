@@ -6,12 +6,12 @@ import env from '../../env.ts';
 
 export function preparePaginatedResponse<T extends PaginatedRow>(
   result: T[],
+  total: number,
   page: number,
   pageSize: number
-): PaginatedResult<Omit<T, 'total'>> {
-  const total = result[0]?.total ?? 0;
+): PaginatedResult<T> {
   return {
-    items: result.map(({ total: _, ...rest }) => rest as Omit<T, 'total'>),
+    items: result,
     page,
     pageSize,
     total,
