@@ -169,4 +169,135 @@ describe('Roles and Permission Endpoints', () => {
       expect(res.body.error.code).toBe('BAD_REQUEST');
     });
   });
+
+  describe('GET /api/v1/roles/:id', () => {
+    it('returns the role with its permissions', async () => {
+      const { adminRole: role } = await createTestRoles();
+      const [perm1, perm2] = await createTestPermissions();
+      await db.insert(rolePermissions).values([
+        { roleId: role.id, permissionId: perm1.id },
+        { roleId: role.id, permissionId: perm2.id },
+      ]);
+
+      const res = await request(app).get(`/api/v1/roles/${role.id}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        id: role.id,
+        name: role.name,
+        permissions: expect.arrayContaining([
+          expect.objectContaining({ id: perm1.id }),
+          expect.objectContaining({ id: perm2.id }),
+        ]),
+      });
+      expect(res.body.permissions).toHaveLength(2);
+    });
+
+    it('returns 404 when the role does not exist', async () => {
+      const res = await request(app).get('/api/v1/roles/999999');
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
+    });
+
+    it('rejects a non-numeric role id', async () => {
+      const res = await request(app).get('/api/v1/roles/abc');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('DELETE /api/v1/roles/:id', () => {
+    it('deletes the role and its permission links', async () => {
+      const { adminRole: role } = await createTestRoles();
+      const [perm1, perm2] = await createTestPermissions();
+      await db.insert(rolePermissions).values([
+        { roleId: role.id, permissionId: perm1.id },
+        { roleId: role.id, permissionId: perm2.id },
+      ]);
+
+      const res = await request(app).delete(`/api/v1/roles/${role.id}`);
+
+      expect(res.status).toBe(204);
+      expect(res.body).toEqual({});
+
+      const remainingRoles = await db.select().from(roles).where(eq(roles.id, role.id));
+      const remainingLinks = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, role.id));
+      expect(remainingRoles).toHaveLength(0);
+      expect(remainingLinks).toHaveLength(0);
+    });
+
+    it('returns 404 when the role does not exist', async () => {
+      const res = await request(app).delete('/api/v1/roles/999999');
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
+    });
+
+    it('rejects a non-numeric role id', async () => {
+      const res = await request(app).delete('/api/v1/roles/abc');
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('PUT /api/v1/roles/:id', () => {
+    it('updates the role name', async () => {
+      const { adminRole: role } = await createTestRoles();
+
+      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({ name: 'superadmin' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ id: role.id, name: 'superadmin' });
+
+      const [updated] = await db.select().from(roles).where(eq(roles.id, role.id));
+      expect(updated.name).toBe('superadmin');
+    });
+
+    it('replaces the role permissions', async () => {
+      const { adminRole: role } = await createTestRoles();
+      const [perm1, perm2] = await createTestPermissions();
+      const [perm3] = await db
+        .insert(permissions)
+        .values([{ resource: 'order', action: 'read' }])
+        .returning();
+      await db.insert(rolePermissions).values([
+        { roleId: role.id, permissionId: perm1.id },
+        { roleId: role.id, permissionId: perm2.id },
+      ]);
+
+      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({ permissions: [perm3.id] });
+
+      expect(res.status).toBe(200);
+
+      const links = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, role.id));
+      expect(links).toHaveLength(1);
+      expect(links[0].permissionId).toBe(perm3.id);
+    });
+
+    it('returns 404 when the role does not exist', async () => {
+      const res = await request(app).put('/api/v1/roles/999999').send({ name: 'editor' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
+    });
+
+    it('returns 400 when the body has no fields to update', async () => {
+      const { adminRole: role } = await createTestRoles();
+
+      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('rejects a non-numeric role id', async () => {
+      const res = await request(app).put('/api/v1/roles/abc').send({ name: 'editor' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
 });

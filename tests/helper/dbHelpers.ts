@@ -1,6 +1,5 @@
 import db from '../../src/db/connection.ts';
 import { account, permissions, rolePermissions, roles, session, user, verification } from '../../src/db/schema.ts';
-import { permissionRows } from '../../src/lib/permission.ts';
 
 export async function createTestRoles() {
   const [adminRole, userRole] = await db

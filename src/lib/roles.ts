@@ -11,10 +11,7 @@ let rolesCache: Record<string, RoleInstance> = {};
 export const ac = createAccessControl(statement);
 
 export async function loadRoles(): Promise<Record<string, RoleInstance>> {
-  const [{ items: roleRows }, permissionRows] = await Promise.all([
-    RoleRepository.findMany(),
-    RolePermissionRepository.findRolesPermissions(),
-  ]);
+  const [{ items: roleRows }, permissionRows] = await Promise.all([RoleRepository.findMany(), RolePermissionRepository.findMany()]);
 
   const statementsByRole: Record<string, Statements> = {};
   for (const { name } of roleRows) {
@@ -25,9 +22,7 @@ export async function loadRoles(): Promise<Record<string, RoleInstance>> {
     (statementsByRole[roleName][resource] ??= []).push(action);
   }
 
-  rolesCache = Object.fromEntries(
-    Object.entries(statementsByRole).map(([name, statements]) => [name, role(statements)])
-  );
+  rolesCache = Object.fromEntries(Object.entries(statementsByRole).map(([name, statements]) => [name, role(statements)]));
 
   return rolesCache;
 }

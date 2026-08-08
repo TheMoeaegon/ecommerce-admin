@@ -5,6 +5,4 @@ export const statement = {
   product: ['create', 'update', 'delete'],
 } as const;
 
-export const permissionRows = Object.entries(statement).flatMap(([resource, actions]) =>
-  actions.map((action: string) => ({ resource, action }))
-);
+export const permissionRows = Object.entries(statement).flatMap(([resource, actions]) => actions.map((action: string) => ({ resource, action })));

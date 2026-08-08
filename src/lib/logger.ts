@@ -5,16 +5,7 @@ import { isProd, isTest } from '../../env.ts';
 export const logger = pino({
   level: isProd() ? 'info' : 'debug',
   redact: {
-    paths: [
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'password',
-      'otp',
-      '*.password',
-      '*.otp',
-      '*.token',
-      '*.jwt',
-    ],
+    paths: ['req.headers.authorization', 'req.headers.cookie', 'password', 'otp', '*.password', '*.otp', '*.token', '*.jwt'],
     censor: '[REDACTED]',
   },
   transport: isProd()

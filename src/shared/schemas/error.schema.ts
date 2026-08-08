@@ -7,9 +7,7 @@ export const validationErrorSchema = z.object({
   message: z.string().describe('Reason the field failed validation'),
 });
 
-export const errorDetailsSchema = z
-  .union([z.array(validationErrorSchema), z.null()])
-  .describe('Field-level validation issues, or null when not applicable');
+export const errorDetailsSchema = z.union([z.array(validationErrorSchema), z.null()]).describe('Field-level validation issues, or null when not applicable');
 
 export const badRequestErrorSchema = z.object({
   error: z.object({

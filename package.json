@@ -10,6 +10,7 @@
     "test:coverage": "vitest run --coverage",
     "check-connection": "APP_STAGE=dev node scripts/test-db.ts",
     "type-check": "tsc --project tsconfig.build.json",
+    "format": "npx prettier --write ./src/",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "APP_STAGE=dev drizzle-kit push",

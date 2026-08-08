@@ -15,9 +15,7 @@ export async function generateMergedOpenApiDocument() {
   const authSpec = await auth.api.generateOpenAPISchema({ headers: {} });
 
   const basePath = auth.options.basePath;
-  const authPaths = Object.fromEntries(
-    Object.entries(authSpec.paths).map(([path, methods]) => [`${basePath}${path}`, methods])
-  );
+  const authPaths = Object.fromEntries(Object.entries(authSpec.paths).map(([path, methods]) => [`${basePath}${path}`, methods]));
 
   return {
     ...appSpec,

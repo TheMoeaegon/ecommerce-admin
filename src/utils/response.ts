@@ -6,12 +6,7 @@ import env from '../../env.ts';
 
 import type { PaginatedResult } from '../shared/types/index.ts';
 
-export function preparePaginatedResponse<T>(
-  result: T[],
-  total: number,
-  page: number,
-  pageSize: number
-): PaginatedResult<T> {
+export function preparePaginatedResponse<T>(result: T[], total: number, page: number, pageSize: number): PaginatedResult<T> {
   return {
     items: result,
     page,
