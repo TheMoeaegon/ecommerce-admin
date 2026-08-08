@@ -1,10 +1,11 @@
 import request from 'supertest';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import app from '../src/app.ts';
 import db from '../src/db/connection.ts';
-import { roles } from '../src/db/schema.ts';
-import { cleanupDatabase, createTestRoles } from './helper/dbHelpers.ts';
+import { permissions, rolePermissions, roles } from '../src/db/schema.ts';
+import { cleanupDatabase, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
 
 describe('Roles and Permission Endpoints', () => {
   afterEach(async () => {
@@ -111,6 +112,61 @@ describe('Roles and Permission Endpoints', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('POST /api/v1/roles', () => {
+    it('creates a role and links the given permissions', async () => {
+      const [perm1, perm2] = await createTestPermissions();
+
+      const res = await request(app)
+        .post('/api/v1/roles')
+        .send({ name: 'editor', permissions: [perm1.id, perm2.id] });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toMatchObject({ name: 'editor' });
+      expect(res.body.id).toEqual(expect.any(Number));
+      expect(res.body.createdAt).toBeDefined();
+
+      const [roleRow] = await db.select().from(roles).where(eq(roles.name, 'editor'));
+      expect(roleRow).toBeDefined();
+
+      const links = await db.select().from(rolePermissions);
+      expect(links).toHaveLength(2);
+      expect(links.map(l => l.permissionId).sort()).toEqual([perm1.id, perm2.id].sort());
+    });
+
+    it('rejects permissions that are strings instead of ids', async () => {
+      const res = await request(app)
+        .post('/api/v1/roles')
+        .send({ name: 'editor', permissions: ['not-a-number'] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 400 when a linked permission does not exist', async () => {
+      const res = await request(app)
+        .post('/api/v1/roles')
+        .send({ name: 'ghost', permissions: [999999] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+
+      const ghost = await db.select().from(roles).where(eq(roles.name, 'ghost'));
+      expect(ghost).toHaveLength(0);
+    });
+
+    it('returns 400 when the role name already exists', async () => {
+      const [perm] = await createTestPermissions();
+      await createTestRoles();
+
+      const res = await request(app)
+        .post('/api/v1/roles')
+        .send({ name: 'admin', permissions: [perm.id] });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
     });
   });
 });

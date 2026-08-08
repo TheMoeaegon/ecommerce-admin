@@ -4,8 +4,8 @@ import db from '../../db/connection.ts';
 import { permissions, rolePermissions, roles } from '../../db/schema.ts';
 import { BaseRepository } from '../../shared/base.repository.ts';
 
-import type { NewRole } from './role-permission.types.ts';
-import type { QueryFilter } from '../../shared/types/index.ts';
+import type { NewRole, RolePermission } from './role-permission.types.ts';
+import type { DB, QueryFilter } from '../../shared/types/index.ts';
 
 export class RoleRepository extends BaseRepository {
   static async findMany(options?: QueryFilter) {
@@ -14,7 +14,6 @@ export class RoleRepository extends BaseRepository {
         id: roles.id,
         name: roles.name,
         createdAt: roles.createdAt,
-        total: sql<number>`count(*) over()`,
       })
       .from(roles)
       .$dynamic();
@@ -32,7 +31,38 @@ export class RoleRepository extends BaseRepository {
     return { items, count };
   }
 
-  static async findById() {}
+  static async findById(id: number, executor: DB = db) {
+    const [role] = await executor.select().from(roles).where(eq(roles.id, id));
+    return role;
+  }
+
+  static async findByName(name: string, executor: DB = db) {
+    const [role] = await executor.select().from(roles).where(eq(roles.name, name));
+    return role;
+  }
+
+  static async insert(newRole: NewRole, executor: DB = db) {
+    const [role] = await executor.insert(roles).values(newRole).returning();
+    return role;
+  }
+
+  static async delete(id: number) {
+    const [deletedRole] = await db.delete(roles).where(eq(roles.id, id)).returning();
+    return deletedRole;
+  }
+}
+
+export class PermissionRepository extends BaseRepository {
+  static async findMany(options?: QueryFilter, executor: DB = db) {
+    const qb = executor.select().from(permissions).$dynamic();
+    return await this.applyQueryOptions(qb, options).execute();
+  }
+}
+
+export class RolePermissionRepository {
+  static async insertMany(rolePermission: RolePermission[], executor: DB) {
+    await executor.insert(rolePermissions).values(rolePermission);
+  }
 
   static async findRolesPermissions() {
     return await db
@@ -45,24 +75,4 @@ export class RoleRepository extends BaseRepository {
       .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
       .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId));
   }
-
-  static async insert(newRole: NewRole) {
-    const [role] = await db.insert(roles).values(newRole).returning();
-    return role;
-  }
-
-  static async delete(id: number) {
-    const [deletedRole] = await db.delete(roles).where(eq(roles.id, id)).returning();
-    return deletedRole;
-  }
-}
-
-export class PermissionRepository {
-  async findAll() {
-    return await db.select().from(permissions);
-  }
-}
-
-export class RolePermissionRepository {
-  static async create() {}
 }

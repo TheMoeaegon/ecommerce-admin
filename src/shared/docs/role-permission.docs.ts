@@ -1,5 +1,17 @@
-import { getRolesQuerySchema, getRolesResponseSchema } from '../../domain/roles/index.ts';
 import { registry } from '../../openapi/registry.ts';
+import {
+  createRoleBodySchema,
+  createRoleResponseSchema,
+  getRolesQuerySchema,
+  getRolesResponseSchema,
+} from '../../domain/roles/index.ts';
+import {
+  badRequestErrorSchema,
+  forbiddenErrorSchema,
+  internalServerErrorSchema,
+  notFoundErrorSchema,
+  unauthorizedErrorSchema,
+} from '../schemas/index.ts';
 
 registry.registerPath({
   method: 'get',
@@ -14,6 +26,65 @@ registry.registerPath({
     200: {
       description: 'Success ',
       content: { 'application/json': { schema: getRolesResponseSchema } },
+    },
+    400: {
+      description: 'Invalid request query parameters',
+      content: { 'application/json': { schema: badRequestErrorSchema } },
+    },
+    401: {
+      description: 'Unauthorized - missing or invalid credentials',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden - you do not have permission to perform this action',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
+    },
+    404: {
+      description: 'Resource not found',
+      content: { 'application/json': { schema: notFoundErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/roles',
+  summary: '/api/v1/roles',
+  description: 'Create a new role and attach permissions to it.',
+  tags: ['Roles'],
+  request: {
+    body: {
+      content: { 'application/json': { schema: createRoleBodySchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Role created successfully',
+      content: { 'application/json': { schema: createRoleResponseSchema } },
+    },
+    400: {
+      description: 'Invalid request body (e.g. permission IDs must be numbers)',
+      content: { 'application/json': { schema: badRequestErrorSchema } },
+    },
+    401: {
+      description: 'Unauthorized - missing or invalid credentials',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden - you do not have permission to perform this action',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
+    },
+    404: {
+      description: 'Resource not found',
+      content: { 'application/json': { schema: notFoundErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
     },
   },
 });

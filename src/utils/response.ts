@@ -1,10 +1,12 @@
-import type { PaginatedResult, PaginatedRow } from '../shared/types/index.ts';
-import type { Response } from 'express';
 import { z } from 'zod';
+import type { Response } from 'express';
+
 import { logger } from '../lib/logger.ts';
 import env from '../../env.ts';
 
-export function preparePaginatedResponse<T extends PaginatedRow>(
+import type { PaginatedResult } from '../shared/types/index.ts';
+
+export function preparePaginatedResponse<T>(
   result: T[],
   total: number,
   page: number,
@@ -19,7 +21,7 @@ export function preparePaginatedResponse<T extends PaginatedRow>(
   };
 }
 
-export function respond<T extends z.ZodType>(res: Response, schema: T, data: z.input<T>) {
+export function respond<T extends z.ZodType>(res: Response, schema: T, data: z.input<T>, status = 200) {
   const result = schema.safeParse(data);
 
   if (!result.success) {
@@ -32,5 +34,5 @@ export function respond<T extends z.ZodType>(res: Response, schema: T, data: z.i
     return res.status(500).json({ error: 'Internal server error' });
   }
 
-  res.json(result.data);
+  res.status(status).json(result.data);
 }

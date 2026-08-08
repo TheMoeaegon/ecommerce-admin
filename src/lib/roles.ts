@@ -1,7 +1,7 @@
 import { createAccessControl, role } from 'better-auth/plugins/access';
 
 import { statement } from './permission.ts';
-import { RoleRepository } from '../domain/roles/role-permission.repository.ts';
+import { RolePermissionRepository, RoleRepository } from '../domain/roles/role-permission.repository.ts';
 
 type RoleInstance = ReturnType<typeof role>;
 type Statements = Record<string, string[]>;
@@ -13,7 +13,7 @@ export const ac = createAccessControl(statement);
 export async function loadRoles(): Promise<Record<string, RoleInstance>> {
   const [{ items: roleRows }, permissionRows] = await Promise.all([
     RoleRepository.findMany(),
-    RoleRepository.findRolesPermissions(),
+    RolePermissionRepository.findRolesPermissions(),
   ]);
 
   const statementsByRole: Record<string, Statements> = {};

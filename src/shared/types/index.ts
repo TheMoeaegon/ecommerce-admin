@@ -1,2 +1,2 @@
-export * from './dbOptions.types.ts';
+export * from './db.ts';
 export * from './pagination.types.ts';

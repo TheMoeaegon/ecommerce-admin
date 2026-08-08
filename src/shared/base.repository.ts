@@ -1,5 +1,5 @@
 import type { PgSelect } from 'drizzle-orm/pg-core';
-import type { QueryFilter } from '../shared/types/dbOptions.types.ts';
+import type { QueryFilter } from './types/db.ts';
 
 export class BaseRepository {
   protected static applyQueryOptions<T extends PgSelect>(qb: T, options?: QueryFilter) {

@@ -11,6 +11,17 @@ export async function createTestRoles() {
   return { adminRole, userRole };
 }
 
+export async function createTestPermissions() {
+  const [perm1, perm2] = await db
+    .insert(permissions)
+    .values([
+      { resource: 'user', action: 'create' },
+      { resource: 'product', action: 'update' },
+    ])
+    .returning();
+  return [perm1, perm2];
+}
+
 export async function cleanupDatabase() {
   await db.delete(rolePermissions);
   await db.delete(permissions);
