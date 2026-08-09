@@ -1,21 +1,39 @@
 import request from 'supertest';
 import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import app from '../src/app.ts';
 import db from '../src/db/connection.ts';
 import { permissions, rolePermissions, roles } from '../src/db/schema.ts';
-import { cleanupDatabase, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
+import { cleanupDatabase, cleanupRoleData, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
+import { createAdminUser, createUser, req, resetRolesCache } from './helper/authHelpers.ts';
 
 describe('Roles and Permission Endpoints', () => {
+  let adminAgent: ReturnType<typeof request.agent>;
+  let normalAgent: ReturnType<typeof request.agent>;
+
+  beforeAll(async () => {
+    const admin = await createAdminUser();
+    adminAgent = await req(admin.email, admin.password);
+
+    const normal = await createUser();
+    normalAgent = await req(normal.email, normal.password);
+  });
+
   afterEach(async () => {
+    await cleanupRoleData();
+    resetRolesCache();
+  });
+
+  afterAll(async () => {
     await cleanupDatabase();
   });
+
   describe('GET /api/v1/roles', () => {
     it('returns all roles with correct pagination metadata', async () => {
       await db.insert(roles).values([{ name: 'moderator' }]);
 
-      const res = await request(app).get('/api/v1/roles');
+      const res = await adminAgent.get('/api/v1/roles');
 
       expect(res.status).toBe(200);
       expect(res.body.total).toBe(3);
@@ -29,7 +47,7 @@ describe('Roles and Permission Endpoints', () => {
     it('does not leak the internal `total` column into items', async () => {
       await createTestRoles();
 
-      const res = await request(app).get('/api/v1/roles');
+      const res = await adminAgent.get('/api/v1/roles');
 
       expect(res.status).toBe(200);
       expect(res.body.items[0]).not.toHaveProperty('total');
@@ -39,7 +57,7 @@ describe('Roles and Permission Endpoints', () => {
     it('applies default pagination when no query params are provided', async () => {
       await createTestRoles();
 
-      const res = await request(app).get('/api/v1/roles');
+      const res = await adminAgent.get('/api/v1/roles');
 
       expect(res.status).toBe(200);
       expect(res.body.page).toBe(1);
@@ -52,7 +70,7 @@ describe('Roles and Permission Endpoints', () => {
     it('paginates correctly with explicit page and pageSize', async () => {
       await createTestRoles();
 
-      const res = await request(app).get('/api/v1/roles?page=2&pageSize=10');
+      const res = await adminAgent.get('/api/v1/roles?page=2&pageSize=10');
 
       expect(res.status).toBe(200);
       expect(res.body.page).toBe(2);
@@ -65,7 +83,7 @@ describe('Roles and Permission Endpoints', () => {
     it('returns empty items but keeps total when page exceeds available data', async () => {
       await createTestRoles();
 
-      const res = await request(app).get('/api/v1/roles?page=10&pageSize=10');
+      const res = await adminAgent.get('/api/v1/roles?page=10&pageSize=10');
 
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(0);
@@ -76,7 +94,7 @@ describe('Roles and Permission Endpoints', () => {
     it('filters by search query using case-insensitive substring match', async () => {
       await db.insert(roles).values([{ name: 'admin' }, { name: 'superadmin' }, { name: 'user' }]);
 
-      const res = await request(app).get('/api/v1/roles?search=admin');
+      const res = await adminAgent.get('/api/v1/roles?search=admin');
 
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(2);
@@ -86,7 +104,7 @@ describe('Roles and Permission Endpoints', () => {
     it('returns an empty result when search matches nothing', async () => {
       await createTestRoles();
 
-      const res = await request(app).get('/api/v1/roles?search=does-not-exist');
+      const res = await adminAgent.get('/api/v1/roles?search=does-not-exist');
 
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(0);
@@ -94,24 +112,31 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('rejects pageSize above the maximum of 100', async () => {
-      const res = await request(app).get('/api/v1/roles?pageSize=101');
+      const res = await adminAgent.get('/api/v1/roles?pageSize=101');
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
 
     it('rejects a negative page', async () => {
-      const res = await request(app).get('/api/v1/roles?page=-1');
+      const res = await adminAgent.get('/api/v1/roles?page=-1');
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
 
     it('rejects a non-numeric page', async () => {
-      const res = await request(app).get('/api/v1/roles?page=abc');
+      const res = await adminAgent.get('/api/v1/roles?page=abc');
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 403 for a user without the view permission', async () => {
+      const res = await normalAgent.get('/api/v1/roles');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -119,7 +144,7 @@ describe('Roles and Permission Endpoints', () => {
     it('creates a role and links the given permissions', async () => {
       const [perm1, perm2] = await createTestPermissions();
 
-      const res = await request(app)
+      const res = await adminAgent
         .post('/api/v1/roles')
         .send({ name: 'editor', permissions: [perm1.id, perm2.id] });
 
@@ -137,7 +162,7 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('rejects permissions that are strings instead of ids', async () => {
-      const res = await request(app)
+      const res = await adminAgent
         .post('/api/v1/roles')
         .send({ name: 'editor', permissions: ['not-a-number'] });
 
@@ -146,7 +171,7 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('returns 400 when a linked permission does not exist', async () => {
-      const res = await request(app)
+      const res = await adminAgent
         .post('/api/v1/roles')
         .send({ name: 'ghost', permissions: [999999] });
 
@@ -161,12 +186,19 @@ describe('Roles and Permission Endpoints', () => {
       const [perm] = await createTestPermissions();
       await createTestRoles();
 
-      const res = await request(app)
+      const res = await adminAgent
         .post('/api/v1/roles')
         .send({ name: 'admin', permissions: [perm.id] });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('BAD_REQUEST');
+    });
+
+    it('returns 403 for a user without the create permission', async () => {
+      const res = await normalAgent.post('/api/v1/roles').send({ name: 'editor' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -179,7 +211,7 @@ describe('Roles and Permission Endpoints', () => {
         { roleId: role.id, permissionId: perm2.id },
       ]);
 
-      const res = await request(app).get(`/api/v1/roles/${role.id}`);
+      const res = await adminAgent.get(`/api/v1/roles/${role.id}`);
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
@@ -191,30 +223,37 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('returns 404 when the role does not exist', async () => {
-      const res = await request(app).get('/api/v1/roles/999999');
+      const res = await adminAgent.get('/api/v1/roles/999999');
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
     });
 
     it('rejects a non-numeric role id', async () => {
-      const res = await request(app).get('/api/v1/roles/abc');
+      const res = await adminAgent.get('/api/v1/roles/abc');
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 403 for a user without the view permission', async () => {
+      const res = await normalAgent.get('/api/v1/roles/1');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
     });
   });
 
   describe('DELETE /api/v1/roles/:id', () => {
     it('deletes the role and its permission links', async () => {
-      const { adminRole: role } = await createTestRoles();
+      const { userRole: role } = await createTestRoles();
       const [perm1, perm2] = await createTestPermissions();
       await db.insert(rolePermissions).values([
         { roleId: role.id, permissionId: perm1.id },
         { roleId: role.id, permissionId: perm2.id },
       ]);
 
-      const res = await request(app).delete(`/api/v1/roles/${role.id}`);
+      const res = await adminAgent.delete(`/api/v1/roles/${role.id}`);
 
       expect(res.status).toBe(204);
       expect(res.body).toEqual({});
@@ -226,25 +265,32 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('returns 404 when the role does not exist', async () => {
-      const res = await request(app).delete('/api/v1/roles/999999');
+      const res = await adminAgent.delete('/api/v1/roles/999999');
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
     });
 
     it('rejects a non-numeric role id', async () => {
-      const res = await request(app).delete('/api/v1/roles/abc');
+      const res = await adminAgent.delete('/api/v1/roles/abc');
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 403 for a user without the delete permission', async () => {
+      const res = await normalAgent.delete('/api/v1/roles/1');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
     });
   });
 
   describe('PUT /api/v1/roles/:id', () => {
     it('updates the role name', async () => {
-      const { adminRole: role } = await createTestRoles();
+      const { userRole: role } = await createTestRoles();
 
-      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({ name: 'superadmin' });
+      const res = await adminAgent.put(`/api/v1/roles/${role.id}`).send({ name: 'superadmin' });
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ id: role.id, name: 'superadmin' });
@@ -254,7 +300,7 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('replaces the role permissions', async () => {
-      const { adminRole: role } = await createTestRoles();
+      const { userRole: role } = await createTestRoles();
       const [perm1, perm2] = await createTestPermissions();
       const [perm3] = await db
         .insert(permissions)
@@ -265,7 +311,7 @@ describe('Roles and Permission Endpoints', () => {
         { roleId: role.id, permissionId: perm2.id },
       ]);
 
-      const res = await request(app)
+      const res = await adminAgent
         .put(`/api/v1/roles/${role.id}`)
         .send({ permissions: [perm3.id] });
 
@@ -277,7 +323,7 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('returns 404 when the role does not exist', async () => {
-      const res = await request(app).put('/api/v1/roles/999999').send({ name: 'editor' });
+      const res = await adminAgent.put('/api/v1/roles/999999').send({ name: 'editor' });
 
       expect(res.status).toBe(404);
       expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
@@ -286,17 +332,24 @@ describe('Roles and Permission Endpoints', () => {
     it('returns 400 when the body has no fields to update', async () => {
       const { adminRole: role } = await createTestRoles();
 
-      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({});
+      const res = await adminAgent.put(`/api/v1/roles/${role.id}`).send({});
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
 
     it('rejects a non-numeric role id', async () => {
-      const res = await request(app).put('/api/v1/roles/abc').send({ name: 'editor' });
+      const res = await adminAgent.put('/api/v1/roles/abc').send({ name: 'editor' });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 403 for a user without the update permission', async () => {
+      const res = await normalAgent.put('/api/v1/roles/1').send({ name: 'editor' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
     });
   });
 
@@ -304,7 +357,7 @@ describe('Roles and Permission Endpoints', () => {
     it('returns all available permissions', async () => {
       await createTestPermissions();
 
-      const res = await request(app).get('/api/v1/roles/permissions');
+      const res = await adminAgent.get('/api/v1/roles/permissions');
 
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(2);
@@ -313,10 +366,24 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('returns an empty list when no permissions exist', async () => {
-      const res = await request(app).get('/api/v1/roles/permissions');
+      const res = await adminAgent.get('/api/v1/roles/permissions');
 
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(0);
     });
+
+    it('returns 403 for a user without the view permission', async () => {
+      const res = await normalAgent.get('/api/v1/roles/permissions');
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+  });
+
+  it('returns 401 for unauthenticated requests', async () => {
+    const res = await request(app).get('/api/v1/roles');
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHORIZED');
   });
 });

@@ -21,6 +21,12 @@ export async function createTestPermissions() {
   return [perm1, perm2];
 }
 
+export async function cleanupRoleData() {
+  await db.delete(rolePermissions);
+  await db.delete(permissions);
+  await db.delete(roles);
+}
+
 export async function cleanupDatabase() {
   await db.delete(rolePermissions);
   await db.delete(permissions);

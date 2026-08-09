@@ -1,7 +1,8 @@
 import { execSync } from 'node:child_process';
 import { db } from '../../src/db/connection.ts';
 import { sql } from 'drizzle-orm';
-import { roles } from '../../src/db/schema.ts';
+import { permissions, rolePermissions, roles } from '../../src/db/schema.ts';
+import { permissionRows } from '../../src/lib/permission.ts';
 
 export default async function setup() {
   console.log('🗄️  Setting up test database...');
@@ -19,16 +20,20 @@ export default async function setup() {
     await db.execute(sql`DROP TABLE IF EXISTS "user" CASCADE`);
     // Use drizzle-kit CLI to push schema to database
     console.log('🚀 Pushing schema using drizzle-kit...');
-    execSync(
-      `npx drizzle-kit push --url="${process.env.DATABASE_URL}" --schema="./src/db/schema.ts" --dialect="postgresql"`,
-      {
-        stdio: 'inherit',
-        cwd: process.cwd(),
-      }
-    );
+    execSync(`npx drizzle-kit push --url="${process.env.DATABASE_URL}" --schema="./src/db/schema.ts" --dialect="postgresql"`, {
+      stdio: 'inherit',
+      cwd: process.cwd(),
+    });
 
     console.log('✅ Test database setup complete');
-    await db.insert(roles).values([{ name: 'admin' }, { name: 'user' }]);
+    const [adminRole] = await db
+      .insert(roles)
+      .values([{ name: 'admin' }, { name: 'user' }])
+      .returning();
+    const insertedPermissions = await db.insert(permissions).values(permissionRows).returning();
+    await db.insert(rolePermissions).values(insertedPermissions.map(p => ({ roleId: adminRole.id, permissionId: p.id })));
+
+    console.log('✅ Seeded roles, permissions and admin role links');
   } catch (err) {
     console.error('❌ Error setting up test database:', err);
     throw err;
