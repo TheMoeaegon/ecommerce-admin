@@ -30,3 +30,18 @@ export async function loadRoles(): Promise<Record<string, RoleInstance>> {
 export function getRoles(): Record<string, RoleInstance> {
   return rolesCache;
 }
+
+export async function refreshRoleInCache(roleId: number, roleName: string) {
+  const roleWithPermissions = await RolePermissionRepository.findByRoleId(roleId);
+  if (!roleWithPermissions) return;
+
+  const statements: Statements = {};
+  for (const { resource, action } of roleWithPermissions.permissions) {
+    (statements[resource] ??= []).push(action);
+  }
+  rolesCache[roleName] = role(statements);
+}
+
+export function removeRoleFromCache(roleName: string) {
+  delete rolesCache[roleName];
+}

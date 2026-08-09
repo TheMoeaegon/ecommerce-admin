@@ -5,6 +5,7 @@ import { permissions, roles } from '../../db/schema.ts';
 import { PermissionRepository, RolePermissionRepository, RoleRepository } from './role-permission.repository.ts';
 import { preparePaginatedResponse } from '../../utils/response.ts';
 import { BadRequestError, NotFoundError } from '../../shared/errors.ts';
+import { refreshRoleInCache, removeRoleFromCache } from '../../lib/roles.ts';
 
 import type { QueryFilter } from '../../shared/types/index.ts';
 import type {
@@ -72,6 +73,9 @@ export class RoleService {
       }
       return newRole;
     });
+
+    await refreshRoleInCache(result.id, result.name);
+
     return result;
   }
 
@@ -86,7 +90,7 @@ export class RoleService {
   }
 
   static async deleteRolePermission(roleId: number) {
-    await db.transaction(async tx => {
+    const deletedRole = await db.transaction(async tx => {
       const deletedRole = await RoleRepository.delete(roleId, tx);
 
       if (!deletedRole) {
@@ -94,7 +98,9 @@ export class RoleService {
       }
 
       await RolePermissionRepository.deleteByRoleId(roleId, tx);
+      return deletedRole;
     });
+    removeRoleFromCache(deletedRole.name);
   }
 
   static async updateRole(roleId: number, { name, permissions: permissionArray }: UpdateRoleDTO): Promise<UpdateRoleRoleResponse> {
@@ -137,6 +143,10 @@ export class RoleService {
       const role = await RoleRepository.update(roleId, { name }, tx);
       return role;
     });
+
+    if (name && name !== existingRole.name) removeRoleFromCache(existingRole.name);
+    await refreshRoleInCache(result.id, result.name);
+
     return result;
   }
 }
