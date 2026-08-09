@@ -26,6 +26,10 @@ export const getRolesQuerySchema = paginationQuerySchema.extend({
 });
 export const getRolesResponseSchema = paginatedSchema(roleSchema);
 
+export const listPermissionsResponseSchema = z.object({
+  items: z.array(permissionSchema),
+});
+
 export const retrieveRolePermissionParamsSchema = roleIdSchema;
 export const retrieveRolePermissionResponseSchema = roleSchema.extend({
   permissions: z.array(permissionSchema),

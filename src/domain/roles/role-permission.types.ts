@@ -8,6 +8,7 @@ import type {
   retrieveRolePermissionResponseSchema,
   updateRoleBodySchema,
   updateRoleResponseSchema,
+  listPermissionsResponseSchema,
 } from './role-permssion.schema.ts';
 import type { rolePermissions, roles } from '../../db/schema.ts';
 
@@ -16,6 +17,8 @@ export type CreateRoleResponse = z.infer<typeof createRoleResponseSchema>;
 
 export type GetRolesResponse = z.infer<typeof getRolesResponseSchema>;
 export type GetRolesQuery = z.infer<typeof getRolesQuerySchema>;
+
+export type ListPermissionsResponse = z.infer<typeof listPermissionsResponseSchema>;
 
 export type GetRolePermissionResponse = z.infer<typeof retrieveRolePermissionResponseSchema>;
 

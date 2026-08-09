@@ -4,6 +4,7 @@ import {
   createRoleResponseSchema,
   getRolesQuerySchema,
   getRolesResponseSchema,
+  listPermissionsResponseSchema,
   removeRolePermissionParamsSchema,
   retrieveRolePermissionParamsSchema,
   retrieveRolePermissionResponseSchema,
@@ -42,6 +43,32 @@ registry.registerPath({
     404: {
       description: 'Resource not found',
       content: { 'application/json': { schema: notFoundErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/roles/permissions',
+  summary: '/api/v1/roles/permissions',
+  description: 'List all available permissions.',
+  tags: ['Roles'],
+  responses: {
+    200: {
+      description: 'Success',
+      content: { 'application/json': { schema: listPermissionsResponseSchema } },
+    },
+    401: {
+      description: 'Unauthorized - missing or invalid credentials',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden - you do not have permission to perform this action',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
     },
     500: {
       description: 'Internal server error',

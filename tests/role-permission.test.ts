@@ -185,10 +185,7 @@ describe('Roles and Permission Endpoints', () => {
       expect(res.body).toMatchObject({
         id: role.id,
         name: role.name,
-        permissions: expect.arrayContaining([
-          expect.objectContaining({ id: perm1.id }),
-          expect.objectContaining({ id: perm2.id }),
-        ]),
+        permissions: expect.arrayContaining([expect.objectContaining({ id: perm1.id }), expect.objectContaining({ id: perm2.id })]),
       });
       expect(res.body.permissions).toHaveLength(2);
     });
@@ -268,7 +265,9 @@ describe('Roles and Permission Endpoints', () => {
         { roleId: role.id, permissionId: perm2.id },
       ]);
 
-      const res = await request(app).put(`/api/v1/roles/${role.id}`).send({ permissions: [perm3.id] });
+      const res = await request(app)
+        .put(`/api/v1/roles/${role.id}`)
+        .send({ permissions: [perm3.id] });
 
       expect(res.status).toBe(200);
 
@@ -298,6 +297,26 @@ describe('Roles and Permission Endpoints', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('GET /api/v1/roles/permissions', () => {
+    it('returns all available permissions', async () => {
+      await createTestPermissions();
+
+      const res = await request(app).get('/api/v1/roles/permissions');
+
+      expect(res.status).toBe(200);
+      expect(res.body.items).toHaveLength(2);
+      expect(res.body.items.map((p: { resource: string; action: string }) => `${p.resource}:${p.action}`).sort()).toEqual(['product:update', 'user:create']);
+      expect(Object.keys(res.body.items[0]).sort()).toEqual(['action', 'id', 'resource']);
+    });
+
+    it('returns an empty list when no permissions exist', async () => {
+      const res = await request(app).get('/api/v1/roles/permissions');
+
+      expect(res.status).toBe(200);
+      expect(res.body.items).toHaveLength(0);
     });
   });
 });

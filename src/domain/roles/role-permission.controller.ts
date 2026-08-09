@@ -4,6 +4,7 @@ import {
   createRoleBodySchema,
   getRolesQuerySchema,
   getRolesResponseSchema,
+  listPermissionsResponseSchema,
   removeRolePermissionParamsSchema,
   retrieveRolePermissionParamsSchema,
   retrieveRolePermissionResponseSchema,
@@ -55,5 +56,11 @@ export class RoleController {
     const result = await RoleService.updateRole(id, body);
 
     respond(res, updateRoleResponseSchema, result);
+  }
+
+  static async listPermissions(_req: Request, res: Response) {
+    const result = await RoleService.listPermissions();
+
+    return respond(res, listPermissionsResponseSchema, result);
   }
 }

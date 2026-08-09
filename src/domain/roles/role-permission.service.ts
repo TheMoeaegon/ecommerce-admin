@@ -13,6 +13,7 @@ import type {
   GetRolePermissionResponse,
   GetRolesQuery,
   GetRolesResponse,
+  ListPermissionsResponse,
   Role,
   RolePermission,
   UpdateRoleDTO,
@@ -32,6 +33,11 @@ export class RoleService {
     const { items, count } = await RoleRepository.findMany(options);
 
     return preparePaginatedResponse(items, count, page, pageSize);
+  }
+
+  static async listPermissions(): Promise<ListPermissionsResponse> {
+    const permissions = await PermissionRepository.findMany();
+    return { items: permissions };
   }
 
   static async createRole({ name, permissions: permissionArray }: CreateRoleDTO): Promise<CreateRoleResponse> {
