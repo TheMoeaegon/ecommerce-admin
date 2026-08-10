@@ -12,6 +12,12 @@ declare global {
         name: string;
         email: string;
         role?: string | null;
+        emailVerified: boolean;
+        image?: string | null;
+        phoneNumber?: string | null;
+        firstName: string;
+        lastName: string;
+        username?: string | null;
       };
     }
   }

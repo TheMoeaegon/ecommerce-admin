@@ -40,7 +40,15 @@ export const auth = betterAuth({
   plugins: [
     openAPI(),
     phoneNumber(),
-    username(),
+    username({
+      minUsernameLength: 4,
+      usernameValidator: username => {
+        if (username === 'admin') {
+          return false;
+        }
+        return true;
+      },
+    }),
     admin({
       ac,
       roles: getRoles(),
