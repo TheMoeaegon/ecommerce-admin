@@ -32,7 +32,7 @@ export class NotFoundError extends AppError {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Bad request', code = ErrorCode.BAD_REQUEST) {
+  constructor(message = 'Bad request', code: string = ErrorCode.BAD_REQUEST) {
     super(message, code, 400);
   }
 }

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 
 import { AppError, ErrorCode } from '../shared/errors.ts';
+import multer from 'multer';
 
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
   if ((err as any).type === 'entity.parse.failed') {
@@ -23,6 +24,12 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
         message: 'The multipart request body is incomplete or malformed.',
         details: null,
       },
+    });
+  }
+
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      error: { code: ErrorCode.INVALID_MULTIPART_REQUEST, message: err.message, details: null },
     });
   }
 
