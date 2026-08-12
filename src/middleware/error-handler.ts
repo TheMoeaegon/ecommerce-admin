@@ -5,6 +5,17 @@ import { AppError, ErrorCode } from '../shared/errors.ts';
 import multer from 'multer';
 
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof multer.MulterError) {
+    req.log.warn({ err }, 'Multipart upload error');
+    return res.status(400).json({
+      error: {
+        code: ErrorCode.INVALID_MULTIPART_REQUEST,
+        message: err.message,
+        details: null,
+      },
+    });
+  }
+
   if ((err as any).type === 'entity.parse.failed') {
     req.log.warn({ err }, 'Invalid json');
     return res.status(400).json({
@@ -24,12 +35,6 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
         message: 'The multipart request body is incomplete or malformed.',
         details: null,
       },
-    });
-  }
-
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({
-      error: { code: ErrorCode.INVALID_MULTIPART_REQUEST, message: err.message, details: null },
     });
   }
 

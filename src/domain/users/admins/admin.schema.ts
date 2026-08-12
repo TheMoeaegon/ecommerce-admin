@@ -1,4 +1,5 @@
 import { createSelectSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 import { user } from '../../../db/schema.ts';
 
@@ -12,4 +13,12 @@ export const retriveProfileResponseSchema = userSchema.omit({
   phoneNumberVerified: true,
   updatedAt: true,
   createdAt: true,
+});
+
+export const uploadProfileImageBodySchema = z.object({
+  image: z.string().openapi({
+    type: 'string',
+    format: 'binary',
+    description: 'Profile picture (JPEG, PNG or WebP, max 5MB)',
+  }),
 });
