@@ -8,18 +8,29 @@ type Statements = Record<string, string[]>;
 
 let rolesCache: Record<string, RoleInstance> = {};
 
+const defaultStatements: Record<string, Statements> = {
+  admin: Object.fromEntries(Object.entries(statement).map(([resource, actions]) => [resource, [...actions]])),
+  user: {},
+};
+
 export const ac = createAccessControl(statement);
 
 export async function loadRoles(): Promise<Record<string, RoleInstance>> {
   const [{ items: roleRows }, permissionRows] = await Promise.all([RoleRepository.findMany(), RolePermissionRepository.findMany()]);
 
-  const statementsByRole: Record<string, Statements> = {};
-  for (const { name } of roleRows) {
-    statementsByRole[name] = {};
-  }
-  for (const { roleName, resource, action } of permissionRows) {
-    if (!statementsByRole[roleName]) continue;
-    (statementsByRole[roleName][resource] ??= []).push(action);
+  let statementsByRole: Record<string, Statements>;
+  if (roleRows.length === 0) {
+    statementsByRole = defaultStatements;
+  } else {
+    const built: Record<string, Statements> = {};
+    for (const { name } of roleRows) {
+      built[name] = {};
+    }
+    for (const { roleName, resource, action } of permissionRows) {
+      if (!built[roleName]) continue;
+      (built[roleName][resource] ??= []).push(action);
+    }
+    statementsByRole = built;
   }
 
   rolesCache = Object.fromEntries(Object.entries(statementsByRole).map(([name, statements]) => [name, role(statements)]));
