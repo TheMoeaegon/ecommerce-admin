@@ -14,6 +14,15 @@ export function isPgError(err: unknown): err is PgError {
   return typeof (err as { code?: unknown })?.code === 'string' && typeof (err as { detail?: unknown })?.detail === 'string';
 }
 
+export function resolvePgError(err: unknown): PgError | undefined {
+  let current: unknown = err;
+  while (current && typeof current === 'object') {
+    if (isPgError(current)) return current;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return undefined;
+}
+
 const ERROR_CLASSES = {
   conflict: ConflictError,
   badRequest: BadRequestError,
@@ -30,9 +39,10 @@ export interface ConstraintMapping {
 }
 
 export function translateConstraintError(err: unknown, constraints: Record<string, ConstraintMapping>): never {
-  if (!isPgError(err)) throw err;
+  const pgError = resolvePgError(err);
+  if (!pgError) throw err;
 
-  const { code, constraint, detail } = err;
+  const { code, constraint, detail } = pgError;
 
   if (constraint && constraints[constraint]) {
     const { status, message } = constraints[constraint];

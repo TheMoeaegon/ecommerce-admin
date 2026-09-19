@@ -26,15 +26,6 @@ export const createProductBodySchema = createInsertSchema(products, {
   availableFrom: z.coerce.date().optional(),
   availableTo: z.coerce.date().optional(),
   displayOrder: z.number().int().min(0, 'Display order must be zero or greater').default(0),
-})
-  .omit({ id: true, createdAt: true, updatedAt: true, deletedAt: true, ratingAverage: true, ratingCount: true })
-  .refine(data => !data.published || data.price > 0, {
-    message: 'A product with a price of 0 cannot be published',
-    path: ['price'],
-  })
-  .refine(data => !data.availableFrom || !data.availableTo || data.availableTo > data.availableFrom, {
-    message: 'availableTo must be after availableFrom',
-    path: ['availableTo'],
-  });
+}).omit({ id: true, createdAt: true, updatedAt: true, deletedAt: true, ratingAverage: true, ratingCount: true });
 
 export const createProductResponseSchema = createSelectSchema(products);
