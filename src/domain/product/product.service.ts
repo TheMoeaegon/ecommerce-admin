@@ -1,26 +1,42 @@
 import { ensureSlugIsUnique, ensureSkuIsUnique, validateProductCreate } from './product.validation.ts';
-import { ProductRepository } from './product.repository.ts';
+import productRepository from './product.repository.ts';
+import db from '../../db/connection.ts';
 
 import type { CreateProductDTO, CreateProductResponse, NewProduct } from './product.types.ts';
 
-export class ProductService {
-  static async createProduct(payload: CreateProductDTO): Promise<CreateProductResponse> {
-    validateProductCreate(payload);
+export async function createProduct(payload: CreateProductDTO): Promise<CreateProductResponse> {
+  validateProductCreate(payload);
 
-    const existingBySlug = await ProductRepository.findBySlug(payload.slug);
-    ensureSlugIsUnique(existingBySlug, payload.slug);
+  const existingBySlug = await productRepository.findBySlug(payload.slug);
+  ensureSlugIsUnique(existingBySlug, payload.slug);
 
-    if (payload.sku) {
-      const existingBySku = await ProductRepository.findBySku(payload.sku);
-      ensureSkuIsUnique(existingBySku, payload.sku);
+  if (payload.sku) {
+    const existingBySku = await productRepository.findBySku(payload.sku);
+    ensureSkuIsUnique(existingBySku, payload.sku);
+  }
+
+  const newProduct: NewProduct = {
+    ...payload,
+    price: String(payload.price),
+    oldPrice: payload.oldPrice == undefined ? undefined : String(payload.oldPrice),
+  };
+
+  return await db.transaction(async tx => {
+    const { categoryIds, tagIds } = payload;
+    const product = await productRepository.insert(newProduct, tx);
+
+    if (categoryIds.length > 0) {
+      await productRepository.addCategories(product.id, categoryIds, tx);
     }
 
-    const newProduct: NewProduct = {
-      ...payload,
-      price: String(payload.price),
-      oldPrice: payload.oldPrice == undefined ? undefined : String(payload.oldPrice),
-    };
+    if (tagIds.length > 0) {
+      await productRepository.addTags(product.id, tagIds, tx);
+    }
 
-    return await ProductRepository.insert(newProduct);
-  }
+    return { ...product, categoryIds, tagIds };
+  });
 }
+
+const ProductService = { createProduct };
+
+export default ProductService;

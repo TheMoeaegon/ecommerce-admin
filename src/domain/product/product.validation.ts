@@ -15,10 +15,6 @@ export function ensureSkuIsUnique(existing: { id: number } | undefined, requeste
 }
 
 export function validateProductCreate(payload: CreateProductDTO): void {
-  if (payload.price < 0) {
-    throw new BadRequestError('Price must be zero or greater.');
-  }
-
   if (payload.published && payload.price <= 0) {
     throw new BadRequestError('A product with a price of 0 cannot be published.');
   }

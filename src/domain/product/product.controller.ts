@@ -2,44 +2,63 @@ import type { Request, Response } from 'express';
 
 import { respond } from '../../utils/response.ts';
 import { createProductBodySchema, createProductResponseSchema } from './product.schema.ts';
-import { ProductService } from './product.service.ts';
+import productService from './product.service.ts';
 
-export class ProductController {
-  static async listPublicProducts(req: Request, res: Response) {}
+export const listPublicProducts = async (_req: Request, res: Response) => {};
 
-  static async retrievePublicProduct(req: Request, res: Response) {}
+export const retrievePublicProduct = async (_req: Request, res: Response) => {};
 
-  static async listAdminProducts(req: Request, res: Response) {}
+export const listAdminProducts = async (_req: Request, res: Response) => {};
 
-  static async retrieveAdminProduct(req: Request, res: Response) {}
+export const retrieveAdminProduct = async (_req: Request, res: Response) => {};
 
-  static async createProduct(req: Request, res: Response) {
-    const body = createProductBodySchema.parse(req.body);
+export const createProduct = async (req: Request, res: Response) => {
+  const body = createProductBodySchema.parse(req.body);
 
-    const result = await ProductService.createProduct(body);
+  const newProduct = await productService.createProduct(body);
 
-    return respond(res, createProductResponseSchema, result, 201);
-  }
+  return res.status(201).json(newProduct);
+};
 
-  static async updateProduct(req: Request, res: Response) {}
+export const updateProduct = async (_req: Request, res: Response) => {};
 
-  static async softDeleteProduct(req: Request, res: Response) {}
+export const softDeleteProduct = async (_req: Request, res: Response) => {};
 
-  static async attachProductMedia(req: Request, res: Response) {}
+export const attachProductMedia = async (_req: Request, res: Response) => {};
 
-  static async removeProductMedia(req: Request, res: Response) {}
+export const removeProductMedia = async (_req: Request, res: Response) => {};
 
-  static async attachProductTags(req: Request, res: Response) {}
+export const attachProductTags = async (_req: Request, res: Response) => {};
 
-  static async removeProductTag(req: Request, res: Response) {}
+export const removeProductTag = async (_req: Request, res: Response) => {};
 
-  static async createProductAttribute(req: Request, res: Response) {}
+export const createProductAttribute = async (_req: Request, res: Response) => {};
 
-  static async createProductAttributeValue(req: Request, res: Response) {}
+export const createProductAttributeValue = async (_req: Request, res: Response) => {};
 
-  static async removeProductAttribute(req: Request, res: Response) {}
+export const removeProductAttribute = async (_req: Request, res: Response) => {};
 
-  static async createProductCombination(req: Request, res: Response) {}
+export const createProductCombination = async (_req: Request, res: Response) => {};
 
-  static async removeProductCombination(req: Request, res: Response) {}
-}
+export const removeProductCombination = async (_req: Request, res: Response) => {};
+
+const ProductController = {
+  listPublicProducts,
+  retrievePublicProduct,
+  listAdminProducts,
+  retrieveAdminProduct,
+  createProduct,
+  updateProduct,
+  softDeleteProduct,
+  attachProductMedia,
+  removeProductMedia,
+  attachProductTags,
+  removeProductTag,
+  createProductAttribute,
+  createProductAttributeValue,
+  removeProductAttribute,
+  createProductCombination,
+  removeProductCombination,
+};
+
+export default ProductController;

@@ -26,6 +26,14 @@ export const createProductBodySchema = createInsertSchema(products, {
   availableFrom: z.coerce.date().optional(),
   availableTo: z.coerce.date().optional(),
   displayOrder: z.number().int().min(0, 'Display order must be zero or greater').default(0),
-}).omit({ id: true, createdAt: true, updatedAt: true, deletedAt: true, ratingAverage: true, ratingCount: true });
+})
+  .omit({ id: true, createdAt: true, updatedAt: true, deletedAt: true, ratingAverage: true, ratingCount: true })
+  .extend({
+    categoryIds: z.array(z.number().int().positive()).default([]).describe('IDs of categories to link the product to'),
+    tagIds: z.array(z.number().int().positive()).default([]).describe('IDs of tags to link the product to'),
+  });
 
-export const createProductResponseSchema = createSelectSchema(products);
+export const createProductResponseSchema = createSelectSchema(products).extend({
+  categoryIds: z.array(z.number().int().positive()).default([]).describe('IDs of categories to link the product to'),
+  tagIds: z.array(z.number().int().positive()).default([]).describe('IDs of tags to link the product to'),
+});

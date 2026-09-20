@@ -14,6 +14,8 @@ const basePayload: CreateProductDTO = {
   showOnHomepage: false,
   isNew: false,
   displayOrder: 0,
+  categoryIds: [],
+  tagIds: [],
 };
 
 describe('validateProductCreate', () => {

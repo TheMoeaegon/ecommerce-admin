@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { requirePermission } from '../../middleware/auth.ts';
-import { ProductController } from './product.controller.ts';
+import ProductController from './product.controller.ts';
 
 export const productRouter = Router();
 export const adminProductRouter = Router();
