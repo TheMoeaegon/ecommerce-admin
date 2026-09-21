@@ -8,12 +8,9 @@ import app from '../src/app.ts';
 import db from '../src/db/connection.ts';
 import { user } from '../src/db/schema.ts';
 import { cleanupDatabase } from './helper/dbHelpers.ts';
-import { createAdminUser, createUser, req } from './helper/authHelpers.ts';
+import { createTestAgents } from './helper/authHelpers.ts';
 
-const PNG_1x1 = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-  'base64'
-);
+const PNG_1x1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 
 const uploadedFiles = new Set<string>();
 
@@ -24,16 +21,11 @@ function absolutePath(imageUrl: string) {
 describe('Admin Profile Image Endpoints', () => {
   let adminAgent: ReturnType<typeof request.agent>;
   let adminId: string;
-  let normalAgent: ReturnType<typeof request.agent>;
 
   beforeAll(async () => {
-    const admin = await createAdminUser();
-    adminAgent = await req(admin.email, admin.password);
+    ({ adminAgent } = await createTestAgents());
     const profile = await adminAgent.get('/api/v1/users/admins/profiles');
     adminId = profile.body.id;
-
-    const normal = await createUser();
-    normalAgent = await req(normal.email, normal.password);
   });
 
   afterAll(async () => {
@@ -50,9 +42,7 @@ describe('Admin Profile Image Endpoints', () => {
 
   describe('POST /api/v1/users/admins/profiles/images', () => {
     it('uploads an image and stores its url', async () => {
-      const res = await adminAgent
-        .post('/api/v1/users/admins/profiles/images')
-        .attach('image', PNG_1x1, { filename: 'avatar.png', contentType: 'image/png' });
+      const res = await adminAgent.post('/api/v1/users/admins/profiles/images').attach('image', PNG_1x1, { filename: 'avatar.png', contentType: 'image/png' });
 
       expect(res.status).toBe(204);
       const image = await storedImage();
@@ -62,9 +52,7 @@ describe('Admin Profile Image Endpoints', () => {
     });
 
     it('replaces the previous image and deletes the old file', async () => {
-      const res = await adminAgent
-        .post('/api/v1/users/admins/profiles/images')
-        .attach('image', PNG_1x1, { filename: 'new.png', contentType: 'image/png' });
+      const res = await adminAgent.post('/api/v1/users/admins/profiles/images').attach('image', PNG_1x1, { filename: 'new.png', contentType: 'image/png' });
 
       expect(res.status).toBe(204);
       const image = await storedImage();
@@ -83,9 +71,7 @@ describe('Admin Profile Image Endpoints', () => {
     });
 
     it('returns 400 for a non-image file type', async () => {
-      const res = await adminAgent
-        .post('/api/v1/users/admins/profiles/images')
-        .attach('image', Buffer.from('hello world'), { filename: 'file.txt', contentType: 'text/plain' });
+      const res = await adminAgent.post('/api/v1/users/admins/profiles/images').attach('image', Buffer.from('hello world'), { filename: 'file.txt', contentType: 'text/plain' });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('BAD_REQUEST');
@@ -98,9 +84,7 @@ describe('Admin Profile Image Endpoints', () => {
     });
 
     it('returns 401 for unauthenticated requests', async () => {
-      const res = await request(app)
-        .post('/api/v1/users/admins/profiles/images')
-        .attach('image', PNG_1x1, { filename: 'a.png', contentType: 'image/png' });
+      const res = await request(app).post('/api/v1/users/admins/profiles/images').attach('image', PNG_1x1, { filename: 'a.png', contentType: 'image/png' });
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('UNAUTHORIZED');
@@ -109,9 +93,7 @@ describe('Admin Profile Image Endpoints', () => {
 
   describe('DELETE /api/v1/users/admins/profiles/images', () => {
     it('deletes the current image and clears the user field', async () => {
-      await adminAgent
-        .post('/api/v1/users/admins/profiles/images')
-        .attach('image', PNG_1x1, { filename: 'to-delete.png', contentType: 'image/png' });
+      await adminAgent.post('/api/v1/users/admins/profiles/images').attach('image', PNG_1x1, { filename: 'to-delete.png', contentType: 'image/png' });
       const image = await storedImage();
       uploadedFiles.add(absolutePath(image!));
 

@@ -58,3 +58,13 @@ export async function req(email: string, password: string) {
   }
   return agent;
 }
+
+export async function createTestAgents() {
+  const admin = await createAdminUser();
+  const adminAgent = await req(admin.email, admin.password);
+
+  const normal = await createUser();
+  const normalAgent = await req(normal.email, normal.password);
+
+  return { adminAgent, normalAgent, adminEmail: admin.email, normalEmail: normal.email };
+}

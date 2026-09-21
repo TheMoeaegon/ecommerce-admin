@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import app from '../src/app.ts';
 import { cleanupDatabase } from './helper/dbHelpers.ts';
-import { createAdminUser, createUser, req } from './helper/authHelpers.ts';
+import { createTestAgents } from './helper/authHelpers.ts';
 
 describe('Admin Profile Endpoint', () => {
   let adminAgent: ReturnType<typeof request.agent>;
@@ -11,12 +11,7 @@ describe('Admin Profile Endpoint', () => {
   let normalAgent: ReturnType<typeof request.agent>;
 
   beforeAll(async () => {
-    const admin = await createAdminUser();
-    adminEmail = admin.email;
-    adminAgent = await req(admin.email, admin.password);
-
-    const normal = await createUser();
-    normalAgent = await req(normal.email, normal.password);
+    ({ adminAgent, normalAgent, adminEmail } = await createTestAgents());
   });
 
   afterAll(async () => {

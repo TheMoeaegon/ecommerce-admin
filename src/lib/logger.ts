@@ -3,7 +3,7 @@ import { pinoHttp } from 'pino-http';
 import { isProd, isTest } from '../../env.ts';
 
 export const logger = pino({
-  level: isProd() ? 'info' : 'debug',
+  level: isTest() ? 'silent' : isProd() ? 'info' : 'debug',
   redact: {
     paths: ['req.headers.authorization', 'req.headers.cookie', 'password', 'otp', '*.password', '*.otp', '*.token', '*.jwt'],
     censor: '[REDACTED]',

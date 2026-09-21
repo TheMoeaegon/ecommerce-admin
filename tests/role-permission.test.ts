@@ -5,23 +5,21 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import app from '../src/app.ts';
 import db from '../src/db/connection.ts';
 import { permissions, rolePermissions, roles } from '../src/db/schema.ts';
-import { cleanupDatabase, cleanupRoleData, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
-import { createAdminUser, createUser, req, resetRolesCache } from './helper/authHelpers.ts';
+import { cleanupDatabase, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
+import { createTestAgents, resetRolesCache } from './helper/authHelpers.ts';
 
 describe('Roles and Permission Endpoints', () => {
   let adminAgent: ReturnType<typeof request.agent>;
   let normalAgent: ReturnType<typeof request.agent>;
 
   beforeAll(async () => {
-    const admin = await createAdminUser();
-    adminAgent = await req(admin.email, admin.password);
-
-    const normal = await createUser();
-    normalAgent = await req(normal.email, normal.password);
+    ({ adminAgent, normalAgent } = await createTestAgents());
   });
 
   afterEach(async () => {
-    await cleanupRoleData();
+    await db.delete(rolePermissions);
+    await db.delete(permissions);
+    await db.delete(roles);
     resetRolesCache();
   });
 
@@ -31,17 +29,17 @@ describe('Roles and Permission Endpoints', () => {
 
   describe('GET /api/v1/roles', () => {
     it('returns all roles with correct pagination metadata', async () => {
-      await db.insert(roles).values([{ name: 'moderator' }]);
+      await createTestRoles();
 
       const res = await adminAgent.get('/api/v1/roles');
 
       expect(res.status).toBe(200);
-      expect(res.body.total).toBe(3);
+      expect(res.body.total).toBe(2);
       expect(res.body.totalPages).toBe(1);
       expect(res.body.page).toBe(1);
       expect(res.body.pageSize).toBe(20);
-      expect(res.body.items).toHaveLength(3);
-      expect(res.body.items.map((r: { name: string }) => r.name).sort()).toEqual(['admin', 'moderator', 'user']);
+      expect(res.body.items).toHaveLength(2);
+      expect(res.body.items.map((r: { name: string }) => r.name).sort()).toEqual(['admin', 'user']);
     });
 
     it('does not leak the internal `total` column into items', async () => {
@@ -144,9 +142,7 @@ describe('Roles and Permission Endpoints', () => {
     it('creates a role and links the given permissions', async () => {
       const [perm1, perm2] = await createTestPermissions();
 
-      const res = await adminAgent
-        .post('/api/v1/roles')
-        .send({ name: 'editor', permissions: [perm1.id, perm2.id] });
+      const res = await adminAgent.post('/api/v1/roles').send({ name: 'editor', permissions: [perm1.id, perm2.id] });
 
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({ name: 'editor' });
@@ -162,18 +158,14 @@ describe('Roles and Permission Endpoints', () => {
     });
 
     it('rejects permissions that are strings instead of ids', async () => {
-      const res = await adminAgent
-        .post('/api/v1/roles')
-        .send({ name: 'editor', permissions: ['not-a-number'] });
+      const res = await adminAgent.post('/api/v1/roles').send({ name: 'editor', permissions: ['not-a-number'] });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
 
     it('returns 400 when a linked permission does not exist', async () => {
-      const res = await adminAgent
-        .post('/api/v1/roles')
-        .send({ name: 'ghost', permissions: [999999] });
+      const res = await adminAgent.post('/api/v1/roles').send({ name: 'ghost', permissions: [999999] });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('BAD_REQUEST');
@@ -186,9 +178,7 @@ describe('Roles and Permission Endpoints', () => {
       const [perm] = await createTestPermissions();
       await createTestRoles();
 
-      const res = await adminAgent
-        .post('/api/v1/roles')
-        .send({ name: 'admin', permissions: [perm.id] });
+      const res = await adminAgent.post('/api/v1/roles').send({ name: 'admin', permissions: [perm.id] });
 
       expect(res.status).toBe(400);
       expect(res.body.error.code).toBe('BAD_REQUEST');
@@ -311,9 +301,7 @@ describe('Roles and Permission Endpoints', () => {
         { roleId: role.id, permissionId: perm2.id },
       ]);
 
-      const res = await adminAgent
-        .put(`/api/v1/roles/${role.id}`)
-        .send({ permissions: [perm3.id] });
+      const res = await adminAgent.put(`/api/v1/roles/${role.id}`).send({ permissions: [perm3.id] });
 
       expect(res.status).toBe(200);
 

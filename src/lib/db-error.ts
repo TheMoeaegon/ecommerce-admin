@@ -46,7 +46,7 @@ export function translateConstraintError(err: unknown, constraints: Record<strin
 
   if (constraint && constraints[constraint]) {
     const { status, message } = constraints[constraint];
-    log.warn({ err, code, constraint, detail }, 'db constraint violation');
+    log.debug({ code, constraint, detail }, 'db constraint violation');
     throw new ERROR_CLASSES[status](message);
   }
 
