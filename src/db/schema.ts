@@ -108,6 +108,7 @@ export const media = pgTable('media', {
   id: t.serial('id').primaryKey(),
   url: t.text('url').notNull(),
   altText: t.varchar('alt_text', { length: 255 }),
+  title: t.varchar('title', { length: 255 }),
   createdAt: t.timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: t.timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -240,13 +241,8 @@ export const productMedia = pgTable(
     productId: t.integer('product_id').notNull(),
     mediaId: t.integer('media_id').notNull(),
     displayOrder: t.integer('display_order').notNull().default(0),
-    isPrimary: t.boolean('is_primary').notNull().default(false),
   },
   table => [
-    t
-      .uniqueIndex('product_media_one_primary_per_product')
-      .on(table.productId)
-      .where(sql`${table.isPrimary} = true`),
     t.uniqueIndex('product_media_product_id_media_id').on(table.productId, table.mediaId),
     t
       .foreignKey({

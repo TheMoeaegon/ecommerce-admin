@@ -42,4 +42,42 @@ export const attachProductMediaParamsSchema = z.object({
   id: z.coerce.number().int().positive('Product id must be a positive integer'),
 });
 
+export const attachProductMediaBodySchema = z.object({
+  media: z
+    .array(
+      z.string().openapi({
+        type: 'string',
+        format: 'binary',
+        description: 'Image file (JPEG, PNG or WebP, max 5MB)',
+      })
+    )
+    .min(1, 'At least one image is required')
+    .max(5, 'A maximum of 5 images can be uploaded at once'),
+});
+
 export const attachProductMediaResponseSchema = z.array(createSelectSchema(productMedia));
+
+export const productMediaParamsSchema = z.object({
+  productId: z.coerce.number().int().positive('Product id must be a positive integer'),
+  mediaId: z.coerce.number().int().positive('Media id must be a positive integer'),
+});
+
+export const updateProductMediaParamsSchema = productMediaParamsSchema;
+
+export const removeProductMediaParamsSchema = productMediaParamsSchema;
+
+export const updateProductMediaBodySchema = z
+  .object({
+    altText: z.string().max(255).optional(),
+    title: z.string().max(255).optional(),
+    displayOrder: z.number().int().min(0, 'Display order must be zero or greater').optional(),
+  })
+  .refine(data => data.altText !== undefined || data.title !== undefined || data.displayOrder !== undefined, {
+    message: 'At least one of altText, title or displayOrder must be provided',
+  });
+
+export const updateProductMediaResponseSchema = createSelectSchema(productMedia).extend({
+  url: z.string(),
+  altText: z.string().nullable(),
+  title: z.string().nullable(),
+});

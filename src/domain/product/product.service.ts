@@ -1,13 +1,9 @@
 import { ensureSlugIsUnique, ensureSkuIsUnique, validateProductCreate } from './product.validation.ts';
 import productRepository from './product.repository.ts';
-import productMediaRepository from './product-media.repository.ts';
-import mediaRepository from '../media/media.repository.ts';
+import productMediaService from './product-media.service.ts';
 import db from '../../db/connection.ts';
-import { BadRequestError } from '../../shared/errors.ts';
-import { deleteFileFromDisk, getImageUrlPath } from '../../utils/media.ts';
 
-import type { AttachProductMediaResponse, CreateProductDTO, CreateProductResponse, NewProduct } from './product.types.ts';
-import type { ProductMediaItem } from './product-media.types.ts';
+import type { AttachProductMediaResponse, CreateProductDTO, CreateProductResponse, NewProduct, UpdateProductMediaDTO, UpdateProductMediaResponse } from './product.types.ts';
 
 export async function createProduct(payload: CreateProductDTO): Promise<CreateProductResponse> {
   validateProductCreate(payload);
@@ -43,34 +39,17 @@ export async function createProduct(payload: CreateProductDTO): Promise<CreatePr
 }
 
 export async function addProductMedia(productId: number, files: Express.Multer.File[]): Promise<AttachProductMediaResponse> {
-  if (files.length === 0) {
-    throw new BadRequestError('media field is required');
-  }
-
-  const imageUrls = files.map(file => getImageUrlPath(file).imageUrl);
-
-  try {
-    return await db.transaction(async tx => {
-      const mediaRows = await mediaRepository.createMany(
-        imageUrls.map(url => ({ url })),
-        tx
-      );
-
-      const items: ProductMediaItem[] = mediaRows.map(media => ({
-        mediaId: media.id,
-        productId,
-      }));
-
-      return await productMediaRepository.addMediaToProduct(productId, items, tx);
-    });
-  } catch (err) {
-    for (const url of imageUrls) {
-      deleteFileFromDisk(url);
-    }
-    throw err;
-  }
+  return await productMediaService.addMediaToProduct(productId, files);
 }
 
-const ProductService = { createProduct, addProductMedia };
+export async function updateProductMedia(productId: number, mediaId: number, patch: UpdateProductMediaDTO): Promise<UpdateProductMediaResponse> {
+  return await productMediaService.updateProductMedia(productId, mediaId, patch);
+}
+
+export async function removeProductMedia(productId: number, mediaId: number): Promise<void> {
+  await productMediaService.removeMediaFromProduct(productId, mediaId);
+}
+
+const ProductService = { createProduct, addProductMedia, updateProductMedia, removeProductMedia };
 
 export default ProductService;

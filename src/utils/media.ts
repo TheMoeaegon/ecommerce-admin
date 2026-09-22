@@ -1,5 +1,5 @@
 import multer from 'multer';
-import fs from 'fs';
+import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -20,13 +20,14 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
 export function createUploadMiddleware(folderName: string, fields: { name: string; maxCount: number }[]) {
   const uploadDir = path.join(__dirname, '../../uploads', folderName);
 
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
   const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      cb(null, uploadDir);
+    destination: async (_req, _file, cb) => {
+      try {
+        await fs.mkdir(uploadDir, { recursive: true });
+        cb(null, uploadDir);
+      } catch (err) {
+        cb(err as Error, uploadDir);
+      }
     },
     filename: (_req, file, cb) => {
       const unique = `${Date.now()}-${file.originalname}`;
@@ -37,10 +38,15 @@ export function createUploadMiddleware(folderName: string, fields: { name: strin
   return multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024, files: 5 } }).fields(fields);
 }
 
-export function deleteFileFromDisk(filePath: string): void {
+export async function deleteFileFromDisk(filePath: string): Promise<void> {
   const absolutePath = path.join(process.cwd(), filePath);
-  if (fs.existsSync(absolutePath)) {
-    fs.unlinkSync(absolutePath);
+
+  try {
+    await fs.unlink(absolutePath);
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
   }
 }
 

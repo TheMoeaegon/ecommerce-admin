@@ -1,7 +1,16 @@
 import type { Request, Response } from 'express';
 
 import { respond } from '../../utils/response.ts';
-import { attachProductMediaParamsSchema, attachProductMediaResponseSchema, createProductBodySchema, createProductResponseSchema } from './product.schema.ts';
+import {
+  attachProductMediaParamsSchema,
+  attachProductMediaResponseSchema,
+  createProductBodySchema,
+  createProductResponseSchema,
+  removeProductMediaParamsSchema,
+  updateProductMediaBodySchema,
+  updateProductMediaParamsSchema,
+  updateProductMediaResponseSchema,
+} from './product.schema.ts';
 import productService from './product.service.ts';
 
 export const listPublicProducts = async (_req: Request, res: Response) => {};
@@ -33,7 +42,22 @@ export const attachProductMedia = async (req: Request, res: Response) => {
   return respond(res, attachProductMediaResponseSchema, result, 201);
 };
 
-export const removeProductMedia = async (_req: Request, res: Response) => {};
+export const removeProductMedia = async (req: Request, res: Response) => {
+  const { productId, mediaId } = removeProductMediaParamsSchema.parse(req.params);
+
+  await productService.removeProductMedia(productId, mediaId);
+
+  return res.status(204).send();
+};
+
+export const updateProductMedia = async (req: Request, res: Response) => {
+  const { productId, mediaId } = updateProductMediaParamsSchema.parse(req.params);
+  const body = updateProductMediaBodySchema.parse(req.body);
+
+  const result = await productService.updateProductMedia(productId, mediaId, body);
+
+  return respond(res, updateProductMediaResponseSchema, result, 200);
+};
 
 export const attachProductTags = async (_req: Request, res: Response) => {};
 
@@ -59,6 +83,7 @@ const ProductController = {
   softDeleteProduct,
   attachProductMedia,
   removeProductMedia,
+  updateProductMedia,
   attachProductTags,
   removeProductTag,
   createProductAttribute,

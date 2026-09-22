@@ -7,6 +7,7 @@ import { createUploadMiddleware } from '../../utils/media.ts';
 export const productRouter = Router();
 export const adminProductRouter = Router();
 
+//products
 productRouter.get('/', ProductController.listPublicProducts);
 productRouter.get('/:id', ProductController.retrievePublicProduct);
 
@@ -16,9 +17,12 @@ adminProductRouter.post('/', requirePermission('product', 'create'), ProductCont
 adminProductRouter.patch('/:id', requirePermission('product', 'update'), ProductController.updateProduct);
 adminProductRouter.delete('/:id', requirePermission('product', 'delete'), ProductController.softDeleteProduct);
 
+//product media
 adminProductRouter.post('/:id/media', createUploadMiddleware('product-media', [{ name: 'media', maxCount: 5 }]), requirePermission('product', 'update'), ProductController.attachProductMedia);
+adminProductRouter.patch('/:productId/media/:mediaId', requirePermission('product', 'update'), ProductController.updateProductMedia);
 adminProductRouter.delete('/:productId/media/:mediaId', requirePermission('product', 'update'), ProductController.removeProductMedia);
 
+//product tags
 adminProductRouter.post('/:id/tags', requirePermission('product', 'update'), ProductController.attachProductTags);
 adminProductRouter.delete('/:productId/tags/:tagId', requirePermission('product', 'update'), ProductController.removeProductTag);
 
