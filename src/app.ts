@@ -1,11 +1,12 @@
-import express, { type Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { toNodeHandler } from 'better-auth/node';
 
 import { env } from '../env.ts';
 import router from './routes/index.ts';
-import { httpLogger } from './lib/logger.ts';
+import { auth, httpLogger } from './lib/index.ts';
 import { notFoundHandler, errorHandler } from './middleware/index.ts';
 
 const app = express();
@@ -18,10 +19,13 @@ app.use(
   })
 );
 app.use(cookieParser());
+
+app.use(httpLogger);
+app.all('/api/v1/auth/{*any}', toNodeHandler(auth));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(httpLogger);
 app.use('/api/v1', router);
 
 app.use(notFoundHandler);

@@ -1,0 +1,58 @@
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { betterAuth } from 'better-auth/minimal';
+import { admin, openAPI, phoneNumber, username } from 'better-auth/plugins';
+
+import db from '../db/connection.ts';
+import { ac, getRoles, loadRoles } from './roles.ts';
+
+await loadRoles();
+
+export const auth = betterAuth({
+  basePath: '/api/v1/auth',
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+  }),
+  trustedOrigins: ['http://localhost:3000'],
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: false,
+  },
+  user: {
+    additionalFields: {
+      firstName: {
+        type: 'string',
+        required: true,
+        input: true,
+      },
+      lastName: {
+        type: 'string',
+        required: true,
+        input: true,
+      },
+    },
+  },
+  socialProviders: {
+    google: {
+      clientId: '',
+      clientSecret: '',
+    },
+  },
+  plugins: [
+    openAPI(),
+    phoneNumber(),
+    username({
+      minUsernameLength: 4,
+      usernameValidator: username => {
+        if (username === 'admin') {
+          return false;
+        }
+        return true;
+      },
+    }),
+    admin({
+      ac,
+      roles: getRoles(),
+      adminRoles: ['admin'],
+    }),
+  ],
+});

@@ -9,5 +9,6 @@
     "allowImportingTsExtensions": true,
     "types": ["vitest/globals"],
     "skipLibCheck": true,
+    "strictNullChecks": true,
   },
 }

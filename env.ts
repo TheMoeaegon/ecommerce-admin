@@ -7,9 +7,10 @@ const isStaging = process.env.APP_STAGE === 'staging';
 const isTesting = process.env.APP_STAGE === 'test';
 const isProduction = process.env.APP_STAGE === 'production';
 
+const currentDir = import.meta.dirname ?? process.cwd();
 const envFile = isDevelopment ? '.env.dev' : isTesting ? '.env.test' : isStaging ? '.env.stage' : null;
 if (envFile) {
-  dotenv.config({ path: path.join(import.meta.dirname, envFile), override: true });
+  dotenv.config({ path: path.join(currentDir, envFile), override: true });
 }
 
 const envSchema = z.object({

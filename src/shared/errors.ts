@@ -16,11 +16,7 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly code: string;
 
-  constructor(
-    message: string = 'An unexpected error occurred.',
-    code: string = ErrorCode.INTERNAL_SERVER_ERROR,
-    statusCode: number = 500
-  ) {
+  constructor(message: string = 'An unexpected error occurred.', code: string = ErrorCode.INTERNAL_SERVER_ERROR, statusCode: number = 500) {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
@@ -36,7 +32,7 @@ export class NotFoundError extends AppError {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Bad request', code = ErrorCode.BAD_REQUEST) {
+  constructor(message = 'Bad request', code: string = ErrorCode.BAD_REQUEST) {
     super(message, code, 400);
   }
 }

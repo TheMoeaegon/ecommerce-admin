@@ -3,18 +3,9 @@ import { pinoHttp } from 'pino-http';
 import { isProd, isTest } from '../../env.ts';
 
 export const logger = pino({
-  level: isProd() ? 'info' : 'debug',
+  level: isTest() ? 'silent' : isProd() ? 'info' : 'debug',
   redact: {
-    paths: [
-      'req.headers.authorization',
-      'req.headers.cookie',
-      'password',
-      'otp',
-      '*.password',
-      '*.otp',
-      '*.token',
-      '*.jwt',
-    ],
+    paths: ['req.headers.authorization', 'req.headers.cookie', 'password', 'otp', '*.password', '*.otp', '*.token', '*.jwt'],
     censor: '[REDACTED]',
   },
   transport: isProd()
@@ -39,7 +30,14 @@ export const httpLogger = pinoHttp({
     return 'info';
   },
   customSuccessMessage: (req, _) => `${req.method} ${req.url} completed`,
-  customErrorMessage: (req, _, err) => `${req.method} ${req.url} failed: ${err.message}`,
+  customErrorMessage: (req, _, err) => `${req.method} ${req.url} message: ${err.message}`,
+  customErrorObject: (_req, res, err, errorObject) => {
+    // this is done so we could avoid showing err object console when faile with 500
+    if (err.message === `failed with status code ${res.statusCode}`) {
+      return { res: errorObject.res, responseTime: errorObject.responseTime };
+    }
+    return errorObject;
+  },
   autoLogging: {
     ignore: req => req.url === '/api/v1/health',
   },
