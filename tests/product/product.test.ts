@@ -2,11 +2,11 @@ import request from 'supertest';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import app from '../src/app.ts';
-import db from '../src/db/connection.ts';
-import { productCategories, products, productTags } from '../src/db/schema.ts';
-import { cleanupDatabase, cleanupProductData, createTestBrand, createTestCategory, createTestManufacturer, createTestTag } from './helper/dbHelpers.ts';
-import { createTestAgents } from './helper/authHelpers.ts';
+import app from '../../src/app.ts';
+import db from '../../src/db/connection.ts';
+import { productCategories, products, productTags } from '../../src/db/schema.ts';
+import { cleanupDatabase, cleanupProductData, createTestBrand, createTestCategory, createTestManufacturer, createTestTag } from '../helper/dbHelpers.ts';
+import { createTestAgents } from '../helper/authHelpers.ts';
 
 let uniqueIndex = 0;
 function uniqueSlug(base: string) {

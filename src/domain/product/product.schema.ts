@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-import { availabilityEnum, products } from '../../db/schema.ts';
+import { availabilityEnum, productMedia, products } from '../../db/schema.ts';
 
 export const createProductBodySchema = createInsertSchema(products, {
   name: z.string().min(1, 'Name is required').max(255),
@@ -37,3 +37,9 @@ export const createProductResponseSchema = createSelectSchema(products).extend({
   categoryIds: z.array(z.number().int().positive()).default([]).describe('IDs of categories to link the product to'),
   tagIds: z.array(z.number().int().positive()).default([]).describe('IDs of tags to link the product to'),
 });
+
+export const attachProductMediaParamsSchema = z.object({
+  id: z.coerce.number().int().positive('Product id must be a positive integer'),
+});
+
+export const attachProductMediaResponseSchema = z.array(createSelectSchema(productMedia));

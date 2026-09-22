@@ -1,5 +1,22 @@
 import db from '../../src/db/connection.ts';
-import { account, brands, categories, manufacturers, permissions, productCategories, products, productTags, rolePermissions, roles, session, tags, user, verification } from '../../src/db/schema.ts';
+import {
+  account,
+  brands,
+  categories,
+  manufacturers,
+  media,
+  permissions,
+  productCategories,
+  productMedia,
+  products,
+  productTags,
+  rolePermissions,
+  roles,
+  session,
+  tags,
+  user,
+  verification,
+} from '../../src/db/schema.ts';
 
 export async function createTestRoles() {
   const [adminRole, userRole] = await db
@@ -61,7 +78,16 @@ export async function createTestTag() {
   return tag;
 }
 
+export async function createTestProduct() {
+  const [product] = await db
+    .insert(products)
+    .values({ name: `Test Product ${productFixtureCounter}`, slug: uniqueProductSlug('test-product'), price: '10.00' })
+    .returning();
+  return product;
+}
+
 export async function cleanupProductData() {
+  await db.delete(productMedia);
   await db.delete(productCategories);
   await db.delete(productTags);
   await db.delete(products);
@@ -69,6 +95,7 @@ export async function cleanupProductData() {
   await db.delete(tags);
   await db.delete(brands);
   await db.delete(manufacturers);
+  await db.delete(media);
 }
 
 export async function cleanupDatabase() {

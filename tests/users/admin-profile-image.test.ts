@@ -4,11 +4,11 @@ import path from 'path';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import app from '../src/app.ts';
-import db from '../src/db/connection.ts';
-import { user } from '../src/db/schema.ts';
-import { cleanupDatabase } from './helper/dbHelpers.ts';
-import { createTestAgents } from './helper/authHelpers.ts';
+import app from '../../src/app.ts';
+import db from '../../src/db/connection.ts';
+import { user } from '../../src/db/schema.ts';
+import { cleanupDatabase } from '../helper/dbHelpers.ts';
+import { createTestAgents } from '../helper/authHelpers.ts';
 
 const PNG_1x1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 

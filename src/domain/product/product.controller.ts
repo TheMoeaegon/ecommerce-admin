@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { respond } from '../../utils/response.ts';
-import { createProductBodySchema, createProductResponseSchema } from './product.schema.ts';
+import { attachProductMediaParamsSchema, attachProductMediaResponseSchema, createProductBodySchema, createProductResponseSchema } from './product.schema.ts';
 import productService from './product.service.ts';
 
 export const listPublicProducts = async (_req: Request, res: Response) => {};
@@ -24,7 +24,14 @@ export const updateProduct = async (_req: Request, res: Response) => {};
 
 export const softDeleteProduct = async (_req: Request, res: Response) => {};
 
-export const attachProductMedia = async (_req: Request, res: Response) => {};
+export const attachProductMedia = async (req: Request, res: Response) => {
+  const { id } = attachProductMediaParamsSchema.parse(req.params);
+  const files = (req.files as Record<string, Express.Multer.File[]> | undefined)?.media ?? [];
+
+  const result = await productService.addProductMedia(id, files);
+
+  return respond(res, attachProductMediaResponseSchema, result, 201);
+};
 
 export const removeProductMedia = async (_req: Request, res: Response) => {};
 

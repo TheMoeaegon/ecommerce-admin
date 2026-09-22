@@ -2,11 +2,11 @@ import request from 'supertest';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import app from '../src/app.ts';
-import db from '../src/db/connection.ts';
-import { permissions, rolePermissions, roles } from '../src/db/schema.ts';
-import { cleanupDatabase, createTestPermissions, createTestRoles } from './helper/dbHelpers.ts';
-import { createTestAgents, resetRolesCache } from './helper/authHelpers.ts';
+import app from '../../src/app.ts';
+import db from '../../src/db/connection.ts';
+import { permissions, rolePermissions, roles } from '../../src/db/schema.ts';
+import { cleanupDatabase, createTestPermissions, createTestRoles } from '../helper/dbHelpers.ts';
+import { createTestAgents, resetRolesCache } from '../helper/authHelpers.ts';
 
 describe('Roles and Permission Endpoints', () => {
   let adminAgent: ReturnType<typeof request.agent>;

@@ -25,16 +25,13 @@ export async function insert(payload: NewProduct, executor: DB = db): Promise<Pr
     return translateConstraintError(err, {
       products_slug_unique: { status: 'conflict', message: `A product with slug "${payload.slug}" already exists.` },
       products_sku_unique: { status: 'conflict', message: `A product with SKU "${payload.sku}" already exists.` },
-      products_price_non_negative: { status: 'badRequest', message: 'A product price cannot be negative. A product cannot be published without a price.' },
-      products_old_price_non_negative: { status: 'badRequest', message: 'Old Price must be zero or greater' },
-      products_rating_average_range: { status: 'badRequest', message: 'The rating average must be between 0 and 5.' },
-      products_rating_count_non_negative: { status: 'badRequest', message: 'The rating count cannot be negative.' },
-      products_available_to_after_from: { status: 'badRequest', message: 'availableTo must be after availableFrom.' },
       fk_products_brand_id_brands: { status: 'badRequest', message: 'The referenced brand does not exist.' },
       fk_products_manufacturer_id_manufacturers: { status: 'badRequest', message: 'The referenced manufacturer does not exist.' },
     });
   }
 }
+
+export async function findByIdWithMedia(productId: number, executor: DB = db) {}
 
 // ------------------------------ Categories ------------------------------ //
 
@@ -94,6 +91,7 @@ const ProductRepository = {
   findBySlug,
   findBySku,
   insert,
+  findByIdWithMedia,
   addCategories,
   removeCategories,
   setCategories,

@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { requirePermission } from '../../middleware/auth.ts';
 import ProductController from './product.controller.ts';
+import { createUploadMiddleware } from '../../utils/media.ts';
 
 export const productRouter = Router();
 export const adminProductRouter = Router();
@@ -15,7 +16,7 @@ adminProductRouter.post('/', requirePermission('product', 'create'), ProductCont
 adminProductRouter.patch('/:id', requirePermission('product', 'update'), ProductController.updateProduct);
 adminProductRouter.delete('/:id', requirePermission('product', 'delete'), ProductController.softDeleteProduct);
 
-adminProductRouter.post('/:id/media', requirePermission('product', 'update'), ProductController.attachProductMedia);
+adminProductRouter.post('/:id/media', createUploadMiddleware('product-media', [{ name: 'media', maxCount: 5 }]), requirePermission('product', 'update'), ProductController.attachProductMedia);
 adminProductRouter.delete('/:productId/media/:mediaId', requirePermission('product', 'update'), ProductController.removeProductMedia);
 
 adminProductRouter.post('/:id/tags', requirePermission('product', 'update'), ProductController.attachProductTags);

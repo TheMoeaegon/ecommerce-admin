@@ -1,9 +1,9 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import app from '../src/app.ts';
-import { cleanupDatabase } from './helper/dbHelpers.ts';
-import { createTestAgents } from './helper/authHelpers.ts';
+import app from '../../src/app.ts';
+import { cleanupDatabase } from '../helper/dbHelpers.ts';
+import { createTestAgents } from '../helper/authHelpers.ts';
 
 describe('Admin Profile Endpoint', () => {
   let adminAgent: ReturnType<typeof request.agent>;
