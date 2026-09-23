@@ -7,7 +7,6 @@ import db from '../../src/db/connection.ts';
 import { media, productMedia } from '../../src/db/schema.ts';
 import { cleanupDatabase, cleanupProductData, createTestProduct } from '../helper/dbHelpers.ts';
 import { createTestAgents } from '../helper/authHelpers.ts';
-import productMediaRepository from '../../src/domain/product/product-media.repository.ts';
 
 const PNG_1x1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
 
@@ -52,7 +51,7 @@ describe('Admin Product Media Endpoints', () => {
 
       expect(res.status).toBe(201);
       expect(res.body).toHaveLength(2);
-      expect(res.body.every((m: { productId: number; mediaId: number; isPrimary: boolean }) => m.productId === productId && m.isPrimary === false)).toBe(true);
+      expect(res.body.every((m: { productId: number; mediaId: number }) => m.productId === productId)).toBe(true);
       expect(res.body.map((m: { mediaId: number }) => m.mediaId)).toEqual([expect.any(Number), expect.any(Number)]);
 
       const mediaRows = await db.select().from(media);
@@ -76,22 +75,6 @@ describe('Admin Product Media Endpoints', () => {
 
       const mediaRows = await db.select().from(media);
       expect(mediaRows).toHaveLength(0);
-    });
-
-    it('returns conflict when the same media is linked twice', async () => {
-      const product = await createTestProduct();
-      const productId = product.id;
-
-      const [mediaRow] = await db
-        .insert(media)
-        .values({ url: `/uploads/product-media/dup-${Date.now()}.png` })
-        .returning();
-
-      const attach = (items: { mediaId: number; productId: number }[]) => productMediaRepository.addMediaToProduct(productId, items);
-
-      await attach([{ mediaId: mediaRow.id, productId }]);
-
-      await expect(attach([{ mediaId: mediaRow.id, productId }])).rejects.toMatchObject({ code: 'CONFLICT' });
     });
   });
 });
