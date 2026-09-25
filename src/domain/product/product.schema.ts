@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-import { availabilityEnum, productMedia, products } from '../../db/schema.ts';
+import { availabilityEnum, controlTypeEnum, productAttributeValues, productAttributes, productMedia, products } from '../../db/schema.ts';
 
 export const createProductBodySchema = createInsertSchema(products, {
   name: z.string().min(1, 'Name is required').max(255),
@@ -80,4 +80,29 @@ export const updateProductMediaResponseSchema = createSelectSchema(productMedia)
   url: z.string(),
   altText: z.string().nullable(),
   title: z.string().nullable(),
+});
+
+export const createProductAttributeParamsSchema = z.object({
+  id: z.coerce.number().int().positive('Product id must be a positive integer'),
+});
+
+export const createProductAttributeValueBodySchema = z.object({
+  name: z.string().min(1, 'Value name is required').max(255),
+  priceAdjustment: z.coerce.number({ error: 'Price adjustment must be a number' }).min(0, 'Price adjustment must be zero or greater').default(0),
+  displayOrder: z.number().int().min(0, 'Display order must be zero or greater').default(0),
+});
+
+export const createProductAttributeBodySchema = z.object({
+  name: z.string().min(1, 'Attribute name is required').max(255),
+  description: z.string().optional(),
+  controlType: z.enum(controlTypeEnum.enumValues).default('SELECT'),
+  displayOrder: z.number().int().min(0, 'Display order must be zero or greater').default(0),
+  values: z.array(createProductAttributeValueBodySchema).default([]),
+});
+
+export const productAttributeResponseSchema = createSelectSchema(productAttributes);
+export const productAttributeValueResponseSchema = createSelectSchema(productAttributeValues);
+
+export const createProductAttributeResponseSchema = productAttributeResponseSchema.extend({
+  values: z.array(productAttributeValueResponseSchema).describe('Values created alongside the attribute'),
 });

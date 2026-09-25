@@ -4,6 +4,9 @@ import { respond } from '../../utils/response.ts';
 import {
   attachProductMediaParamsSchema,
   attachProductMediaResponseSchema,
+  createProductAttributeBodySchema,
+  createProductAttributeParamsSchema,
+  createProductAttributeResponseSchema,
   createProductBodySchema,
   removeProductMediaParamsSchema,
   updateProductMediaBodySchema,
@@ -11,6 +14,7 @@ import {
   updateProductMediaResponseSchema,
 } from './product.schema.ts';
 
+import * as productAttributeService from './product-attribute.service.ts';
 import * as productService from './product.service.ts';
 
 export const listPublicProducts = async (_req: Request, res: Response) => {};
@@ -63,9 +67,14 @@ export const attachProductTags = async (_req: Request, res: Response) => {};
 
 export const removeProductTag = async (_req: Request, res: Response) => {};
 
-export const createProductAttribute = async (_req: Request, res: Response) => {};
+export const createProductAttribute = async (req: Request, res: Response) => {
+  const { id } = createProductAttributeParamsSchema.parse(req.params);
+  const body = createProductAttributeBodySchema.parse(req.body);
 
-export const createProductAttributeValue = async (_req: Request, res: Response) => {};
+  const result = await productAttributeService.createAttribute(id, body);
+
+  return res.status(201).json(result);
+};
 
 export const removeProductAttribute = async (_req: Request, res: Response) => {};
 

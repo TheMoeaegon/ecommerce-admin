@@ -2,12 +2,15 @@ import { z } from 'zod';
 
 import type {
   attachProductMediaResponseSchema,
+  createProductAttributeBodySchema,
+  createProductAttributeResponseSchema,
+  createProductAttributeValueBodySchema,
   createProductBodySchema,
   createProductResponseSchema,
   updateProductMediaBodySchema,
   updateProductMediaResponseSchema,
 } from './product.schema.ts';
-import type { products } from '../../db/schema.ts';
+import type { productAttributeValues, productAttributes, products } from '../../db/schema.ts';
 
 export type CreateProductDTO = z.infer<typeof createProductBodySchema>;
 export type CreateProductResponse = z.infer<typeof createProductResponseSchema>;
@@ -17,5 +20,14 @@ export type AttachProductMediaResponse = z.infer<typeof attachProductMediaRespon
 export type UpdateProductMediaDTO = z.infer<typeof updateProductMediaBodySchema>;
 export type UpdateProductMediaResponse = z.infer<typeof updateProductMediaResponseSchema>;
 
+export type CreateProductAttributeDTO = z.infer<typeof createProductAttributeBodySchema>;
+export type CreateProductAttributeValueDTO = z.infer<typeof createProductAttributeValueBodySchema>;
+export type CreateProductAttributeResponse = z.infer<typeof createProductAttributeResponseSchema>;
+
 export type NewProduct = typeof products.$inferInsert;
 export type Product = typeof products.$inferSelect;
+
+export type NewProductAttribute = typeof productAttributes.$inferInsert;
+export type ProductAttribute = typeof productAttributes.$inferSelect;
+export type NewProductAttributeValue = typeof productAttributeValues.$inferInsert;
+export type ProductAttributeValue = typeof productAttributeValues.$inferSelect;

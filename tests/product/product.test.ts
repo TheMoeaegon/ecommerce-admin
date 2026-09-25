@@ -4,8 +4,9 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import app from '../../src/app.ts';
 import db from '../../src/db/connection.ts';
-import { productCategories, products, productTags } from '../../src/db/schema.ts';
-import { cleanupDatabase, cleanupProductData, createTestBrand, createTestCategory, createTestManufacturer, createTestTag } from '../helper/dbHelpers.ts';
+import { productAttributeValues, productAttributes, productCategories, products, productTags } from '../../src/db/schema.ts';
+import * as productAttributeRepository from '../../src/domain/product/product-attribute.repository.ts';
+import { cleanupDatabase, cleanupProductData, createTestBrand, createTestCategory, createTestManufacturer, createTestProduct, createTestTag } from '../helper/dbHelpers.ts';
 import { createTestAgents } from '../helper/authHelpers.ts';
 
 let uniqueIndex = 0;
@@ -327,6 +328,193 @@ describe('Product Endpoints', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+  });
+
+  describe('POST /api/v1/admin/products/:id/attributes', () => {
+    it('creates an attribute with its values', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+        controlType: 'SELECT',
+        values: [
+          { name: 'S', priceAdjustment: 0 },
+          { name: 'L', priceAdjustment: '5.50', displayOrder: 2 },
+        ],
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toMatchObject({
+        id: expect.any(Number),
+        productId: product.id,
+        name: 'Size',
+        controlType: 'SELECT',
+        displayOrder: 0,
+      });
+      expect(res.body.description).toBeNull();
+      expect(res.body.values).toHaveLength(2);
+      expect(res.body.values.map(v => v.name).sort()).toEqual(['L', 'S']);
+      const largeAdjustment = res.body.values.find(v => v.name === 'L');
+      expect(Number(largeAdjustment.priceAdjustment)).toBe(5.5);
+
+      const [attr] = await db.select().from(productAttributes).where(eq(productAttributes.id, res.body.id));
+      expect(attr.productId).toBe(product.id);
+
+      const valueRows = await db.select().from(productAttributeValues).where(eq(productAttributeValues.productAttributeId, res.body.id)).orderBy(productAttributeValues.id);
+      expect(valueRows).toHaveLength(2);
+      expect(valueRows.map(v => v.name)).toEqual(['S', 'L']);
+      expect(Number(valueRows[0].priceAdjustment)).toBe(0);
+      expect(Number(valueRows[1].priceAdjustment)).toBe(5.5);
+    });
+
+    it('creates an attribute with no values when values are omitted', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Brand',
+      });
+
+      expect(res.status).toBe(201);
+      expect(res.body.values).toEqual([]);
+
+      const valueRows = await db.select().from(productAttributeValues).where(eq(productAttributeValues.productAttributeId, res.body.id));
+      expect(valueRows).toHaveLength(0);
+    });
+
+    it('returns 400 for an invalid controlType', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Color',
+        controlType: 'CHECKBOX',
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 400 and rolls back when the product does not exist', async () => {
+      const res = await adminAgent.post('/api/v1/admin/products/999999/attributes').send({
+        name: 'Size',
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+
+      const rows = await db.select().from(productAttributes);
+      expect(rows).toHaveLength(0);
+    });
+
+    it('returns 409 when the attribute name already exists for the product', async () => {
+      const product = await createTestProduct();
+
+      const first = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({ name: 'Color' });
+      expect(first.status).toBe(201);
+
+      const second = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({ name: 'Color' });
+      expect(second.status).toBe(409);
+      expect(second.body.error.code).toBe('CONFLICT');
+    });
+
+    it('allows the same attribute name on a different product', async () => {
+      const productA = await createTestProduct();
+      const productB = await createTestProduct();
+
+      const first = await adminAgent.post(`/api/v1/admin/products/${productA.id}/attributes`).send({ name: 'Color' });
+      const second = await adminAgent.post(`/api/v1/admin/products/${productB.id}/attributes`).send({ name: 'Color' });
+
+      expect(first.status).toBe(201);
+      expect(second.status).toBe(201);
+    });
+
+    it('returns 409 and rolls back when a value name duplicates another value in the same attribute', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+        values: [{ name: 'S' }, { name: 'S' }],
+      });
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.code).toBe('CONFLICT');
+
+      const attrs = await db.select().from(productAttributes).where(eq(productAttributes.name, 'Size'));
+      expect(attrs).toHaveLength(0);
+    });
+
+    it('allows the same value name on different attributes', async () => {
+      const product = await createTestProduct();
+
+      const size = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({ name: 'Size', values: [{ name: 'S' }] });
+      const color = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({ name: 'Color', values: [{ name: 'S' }] });
+
+      expect(size.status).toBe(201);
+      expect(color.status).toBe(201);
+    });
+
+    it('returns 400 when the attribute displayOrder is negative', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+        displayOrder: -1,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 400 when a value displayOrder is negative', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+        values: [{ name: 'S', displayOrder: -1 }],
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 400 when a value priceAdjustment is negative', async () => {
+      const product = await createTestProduct();
+
+      const res = await adminAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+        values: [{ name: 'S', priceAdjustment: -5 }],
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('returns 403 for a user without the product update permission', async () => {
+      const product = await createTestProduct();
+
+      const res = await normalAgent.post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Forbidden',
+      });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('returns 401 for unauthenticated requests', async () => {
+      const product = await createTestProduct();
+
+      const res = await request(app).post(`/api/v1/admin/products/${product.id}/attributes`).send({
+        name: 'Size',
+      });
+
+      expect(res.status).toBe(401);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects a value whose attribute does not exist (FK constraint)', async () => {
+      const promise = productAttributeRepository.insertManyAttributeValue([{ name: 'S', priceAdjustment: '0', displayOrder: 0, productAttributeId: 999999 }]);
+
+      await expect(promise).rejects.toThrow('The attribute with id "999999" does not exist.');
     });
   });
 });

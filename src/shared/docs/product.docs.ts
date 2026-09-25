@@ -3,6 +3,9 @@ import {
   attachProductMediaBodySchema,
   attachProductMediaParamsSchema,
   attachProductMediaResponseSchema,
+  createProductAttributeBodySchema,
+  createProductAttributeParamsSchema,
+  createProductAttributeResponseSchema,
   createProductBodySchema,
   createProductResponseSchema,
   productMediaParamsSchema,
@@ -91,6 +94,47 @@ registry.registerPath({
     404: {
       description: 'Product not found',
       content: { 'application/json': { schema: notFoundErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/admin/products/{id}/attributes',
+  summary: '/api/v1/admin/products/{id}/attributes',
+  description: 'Create a product attribute together with its values. Values are optional and each carries a price adjustment and display order.',
+  tags: ['Admin Products'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: createProductAttributeParamsSchema,
+    body: {
+      content: { 'application/json': { schema: createProductAttributeBodySchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Attribute created with its values',
+      content: { 'application/json': { schema: createProductAttributeResponseSchema } },
+    },
+    400: {
+      description: 'Validation error or the product does not exist',
+      content: { 'application/json': { schema: badRequestErrorSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
+    },
+    409: {
+      description: 'An attribute with the same name already exists for the product',
+      content: { 'application/json': { schema: conflictErrorSchema } },
     },
     500: {
       description: 'Internal server error',

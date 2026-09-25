@@ -6,6 +6,8 @@ import {
   manufacturers,
   media,
   permissions,
+  productAttributeValues,
+  productAttributes,
   productCategories,
   productMedia,
   products,
@@ -87,6 +89,8 @@ export async function createTestProduct() {
 }
 
 export async function cleanupProductData() {
+  await db.delete(productAttributeValues);
+  await db.delete(productAttributes);
   await db.delete(productMedia);
   await db.delete(productCategories);
   await db.delete(productTags);

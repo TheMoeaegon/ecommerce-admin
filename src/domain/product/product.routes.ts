@@ -24,7 +24,6 @@ adminProductRouter.delete('/:productId/media/:mediaId', requirePermission('produ
 
 //attributes TODO
 adminProductRouter.post('/:id/attributes', requirePermission('product', 'update'), ProductController.createProductAttribute);
-adminProductRouter.post('/:productId/attributes/:attributeId/values', requirePermission('product', 'update'), ProductController.createProductAttributeValue);
 adminProductRouter.delete('/:productId/attributes/:attributeId', requirePermission('product', 'update'), ProductController.removeProductAttribute);
 
 adminProductRouter.post('/:id/combinations', requirePermission('product', 'update'), ProductController.createProductCombination);
