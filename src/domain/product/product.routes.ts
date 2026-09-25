@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { requirePermission } from '../../middleware/auth.ts';
-import ProductController from './product.controller.ts';
+import * as ProductController from './product.controller.ts';
 import { createUploadMiddleware } from '../../utils/media.ts';
 
 export const productRouter = Router();
@@ -22,13 +22,14 @@ adminProductRouter.post('/:id/media', createUploadMiddleware('product-media', [{
 adminProductRouter.patch('/:productId/media/:mediaId', requirePermission('product', 'update'), ProductController.updateProductMedia);
 adminProductRouter.delete('/:productId/media/:mediaId', requirePermission('product', 'update'), ProductController.removeProductMedia);
 
-//product tags
-adminProductRouter.post('/:id/tags', requirePermission('product', 'update'), ProductController.attachProductTags);
-adminProductRouter.delete('/:productId/tags/:tagId', requirePermission('product', 'update'), ProductController.removeProductTag);
-
+//attributes TODO
 adminProductRouter.post('/:id/attributes', requirePermission('product', 'update'), ProductController.createProductAttribute);
 adminProductRouter.post('/:productId/attributes/:attributeId/values', requirePermission('product', 'update'), ProductController.createProductAttributeValue);
 adminProductRouter.delete('/:productId/attributes/:attributeId', requirePermission('product', 'update'), ProductController.removeProductAttribute);
 
 adminProductRouter.post('/:id/combinations', requirePermission('product', 'update'), ProductController.createProductCombination);
 adminProductRouter.delete('/:productId/combinations/:combinationId', requirePermission('product', 'update'), ProductController.removeProductCombination);
+
+// specification TODO
+
+// related products TODO

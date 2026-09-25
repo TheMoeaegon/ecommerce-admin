@@ -68,14 +68,3 @@ export async function updateDisplayOrder(productId: number, mediaId: number, dis
     .set({ displayOrder })
     .where(and(eq(productMedia.productId, productId), eq(productMedia.mediaId, mediaId)));
 }
-
-const ProductMediaRepository = {
-  setMediaForProduct,
-  addMediaToProduct,
-  removeMediaFromProduct,
-  getMediaByProduct,
-  getAllMediaByProduct,
-  updateDisplayOrder,
-};
-
-export default ProductMediaRepository;

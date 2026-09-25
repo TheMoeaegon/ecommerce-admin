@@ -1,5 +1,5 @@
 import db from '../../db/connection.ts';
-import mediaRepository from './media.repository.ts';
+import * as mediaRepository from './media.repository.ts';
 
 import type { Media, NewMedia } from './media.types.ts';
 import type { DB } from '../../shared/types/index.ts';
@@ -21,20 +21,9 @@ export async function update(id: number, patch: Partial<NewMedia>, executor: DB 
 }
 
 export async function deleteMedia(ids: number[], executor: DB = db): Promise<Media[]> {
-  return await mediaRepository.delete(ids, executor);
+  return await mediaRepository.deleteByIds(ids, executor);
 }
 
 export async function findByIds(ids: number[], executor: DB = db): Promise<Media[]> {
   return await mediaRepository.findByIds(ids, executor);
 }
-
-const MediaService = {
-  create,
-  createMany,
-  findById,
-  update,
-  deleteMedia,
-  findByIds,
-};
-
-export default MediaService;

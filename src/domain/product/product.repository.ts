@@ -86,18 +86,3 @@ export async function setTags(productId: number, tagIds: number[], executor: DB 
   await executor.delete(productTags).where(eq(productTags.productId, productId));
   await addTags(productId, tagIds, executor);
 }
-
-const ProductRepository = {
-  findBySlug,
-  findBySku,
-  insert,
-  findByIdWithMedia,
-  addCategories,
-  removeCategories,
-  setCategories,
-  addTags,
-  removeTags,
-  setTags,
-};
-
-export default ProductRepository;

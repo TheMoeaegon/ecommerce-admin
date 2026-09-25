@@ -5,13 +5,13 @@ import {
   attachProductMediaParamsSchema,
   attachProductMediaResponseSchema,
   createProductBodySchema,
-  createProductResponseSchema,
   removeProductMediaParamsSchema,
   updateProductMediaBodySchema,
   updateProductMediaParamsSchema,
   updateProductMediaResponseSchema,
 } from './product.schema.ts';
-import productService from './product.service.ts';
+
+import * as productService from './product.service.ts';
 
 export const listPublicProducts = async (_req: Request, res: Response) => {};
 
@@ -72,25 +72,3 @@ export const removeProductAttribute = async (_req: Request, res: Response) => {}
 export const createProductCombination = async (_req: Request, res: Response) => {};
 
 export const removeProductCombination = async (_req: Request, res: Response) => {};
-
-const ProductController = {
-  listPublicProducts,
-  retrievePublicProduct,
-  listAdminProducts,
-  retrieveAdminProduct,
-  createProduct,
-  updateProduct,
-  softDeleteProduct,
-  attachProductMedia,
-  removeProductMedia,
-  updateProductMedia,
-  attachProductTags,
-  removeProductTag,
-  createProductAttribute,
-  createProductAttributeValue,
-  removeProductAttribute,
-  createProductCombination,
-  removeProductCombination,
-};
-
-export default ProductController;

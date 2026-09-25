@@ -1,12 +1,14 @@
 import db from '../../db/connection.ts';
+
+import * as mediaService from '../media/media.service.ts';
+import * as productMediaRepository from './product-media.repository.ts';
+
 import { BadRequestError, NotFoundError } from '../../shared/errors.ts';
 import { deleteFileFromDisk, getImageUrlPath } from '../../utils/media.ts';
-import mediaService from '../media/media.service.ts';
-import productMediaRepository from './product-media.repository.ts';
 
+import type { DB } from '../../shared/types/index.ts';
 import type { ProductMediaItem, ProductMedia, ProductMediaWithMedia } from './product-media.types.ts';
 import type { AttachProductMediaResponse, UpdateProductMediaDTO } from './product.types.ts';
-import type { DB } from '../../shared/types/index.ts';
 
 export async function setMediaForProduct(productId: number, items: ProductMediaItem[], executor: DB = db): Promise<ProductMedia[]> {
   return await productMediaRepository.setMediaForProduct(productId, items, executor);
@@ -105,13 +107,3 @@ export async function updateProductMedia(productId: number, mediaId: number, pat
     return await getMediaByProduct(productId, mediaId, tx);
   });
 }
-
-const ProductMediaService = {
-  setMediaForProduct,
-  addMediaToProduct,
-  removeMediaFromProduct,
-  getMediaByProduct,
-  updateProductMedia,
-};
-
-export default ProductMediaService;

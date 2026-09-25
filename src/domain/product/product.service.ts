@@ -1,7 +1,9 @@
-import { ensureSlugIsUnique, ensureSkuIsUnique, validateProductCreate } from './product.validation.ts';
-import productRepository from './product.repository.ts';
-import productMediaService from './product-media.service.ts';
 import db from '../../db/connection.ts';
+
+import * as productMediaService from './product-media.service.ts';
+import * as productRepository from './product.repository.ts';
+
+import { ensureSlugIsUnique, ensureSkuIsUnique, validateProductCreate } from './product.validation.ts';
 
 import type { AttachProductMediaResponse, CreateProductDTO, CreateProductResponse, NewProduct, UpdateProductMediaDTO, UpdateProductMediaResponse } from './product.types.ts';
 
@@ -49,7 +51,3 @@ export async function updateProductMedia(productId: number, mediaId: number, pat
 export async function removeProductMedia(productId: number, mediaId: number): Promise<void> {
   await productMediaService.removeMediaFromProduct(productId, mediaId);
 }
-
-const ProductService = { createProduct, addProductMedia, updateProductMedia, removeProductMedia };
-
-export default ProductService;

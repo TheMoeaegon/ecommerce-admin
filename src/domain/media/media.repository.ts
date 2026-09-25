@@ -1,10 +1,11 @@
-import db from '../../db/connection.ts';
 import { eq, inArray } from 'drizzle-orm';
+
+import db from '../../db/connection.ts';
 import { media } from '../../db/schema.ts';
 import { translateConstraintError } from '../../lib/db-error.ts';
 
-import type { Media, NewMedia } from './media.types.ts';
 import type { DB } from '../../shared/types/index.ts';
+import type { Media, NewMedia } from './media.types.ts';
 
 export async function create(m: NewMedia, executor: DB = db) {
   const [newMedia] = await executor.insert(media).values(m).returning();
@@ -40,14 +41,3 @@ export async function deleteByIds(ids: number[], executor: DB = db): Promise<Med
 export async function findByIds(ids: number[], executor: DB = db): Promise<Media[]> {
   return [];
 }
-
-const MediaRepository = {
-  create,
-  createMany,
-  findById,
-  update,
-  delete: deleteByIds,
-  findByIds,
-};
-
-export default MediaRepository;
