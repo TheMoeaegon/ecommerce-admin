@@ -3,6 +3,11 @@ import {
   attachProductMediaBodySchema,
   attachProductMediaParamsSchema,
   attachProductMediaResponseSchema,
+  computeAttributeCombinationPriceBodySchema,
+  computeAttributeCombinationPriceResponseSchema,
+  createAttributeCombinationBodySchema,
+  createAttributeCombinationParamsSchema,
+  createAttributeCombinationResponseSchema,
   createProductAttributeBodySchema,
   createProductAttributeParamsSchema,
   createProductAttributeResponseSchema,
@@ -134,6 +139,91 @@ registry.registerPath({
     },
     409: {
       description: 'An attribute with the same name already exists for the product',
+      content: { 'application/json': { schema: conflictErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/admin/products/{id}/attributes/combinations/price',
+  summary: '/api/v1/admin/products/{id}/attributes/combinations/price',
+  description:
+    'Computes the price of an attribute combination without creating it. The computed price is the product base price plus the price adjustments of the selected attribute values, rounded to two decimals. Use it to preview a price before creating the combination. Every id in `values` must resolve to an attribute value that belongs to the given product, and no two selected values may belong to the same attribute.',
+  tags: ['Admin Products'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: createAttributeCombinationParamsSchema,
+    body: {
+      content: { 'application/json': { schema: computeAttributeCombinationPriceBodySchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Computed price for the selected attribute values',
+      content: { 'application/json': { schema: computeAttributeCombinationPriceResponseSchema } },
+    },
+    400: {
+      description: 'Validation error, no values were selected, two selected values belong to the same attribute, or one or more attribute values do not exist for this product',
+      content: { 'application/json': { schema: badRequestErrorSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
+    },
+    404: {
+      description: 'Product not found',
+      content: { 'application/json': { schema: notFoundErrorSchema } },
+    },
+    500: {
+      description: 'Internal server error',
+      content: { 'application/json': { schema: internalServerErrorSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/admin/products/{id}/attributes/combinations',
+  summary: '/api/v1/admin/products/{id}/attributes/combinations',
+  description:
+    'Creates an attribute combination for a product. Select exactly one value per attribute: every id in `values` must resolve to an attribute value that belongs to this product, and no two selected values may belong to the same attribute. Provide either `computedPrice` (typically the result of the combination price endpoint) or `overridePrice`, or both. A response `values` field carries the human-readable label built from the selected values, ordered by attribute display order. Setting `isDefault` demotes any existing default combination of the product. A combination is unique per product by its selected values and by its sku.',
+  tags: ['Admin Products'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: createAttributeCombinationParamsSchema,
+    body: {
+      content: { 'application/json': { schema: createAttributeCombinationBodySchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Attribute combination created',
+      content: { 'application/json': { schema: createAttributeCombinationResponseSchema } },
+    },
+    400: {
+      description:
+        'Validation error, no values were selected, no price was provided, two selected values belong to the same attribute, the product does not exist, or one or more attribute values do not exist for this product',
+      content: { 'application/json': { schema: badRequestErrorSchema } },
+    },
+    401: {
+      description: 'Unauthorized',
+      content: { 'application/json': { schema: unauthorizedErrorSchema } },
+    },
+    403: {
+      description: 'Forbidden',
+      content: { 'application/json': { schema: forbiddenErrorSchema } },
+    },
+    409: {
+      description: 'A combination with the same values or the same sku already exists for this product',
       content: { 'application/json': { schema: conflictErrorSchema } },
     },
     500: {

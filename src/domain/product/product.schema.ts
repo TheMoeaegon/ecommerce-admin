@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-import { availabilityEnum, controlTypeEnum, productAttributeValues, productAttributes, productMedia, products } from '../../db/schema.ts';
+import { attributeCombinations, availabilityEnum, controlTypeEnum, productAttributeValues, productAttributes, productMedia, products } from '../../db/schema.ts';
 
 export const createProductBodySchema = createInsertSchema(products, {
   name: z.string().min(1, 'Name is required').max(255),
@@ -105,4 +105,42 @@ export const productAttributeValueResponseSchema = createSelectSchema(productAtt
 
 export const createProductAttributeResponseSchema = productAttributeResponseSchema.extend({
   values: z.array(productAttributeValueResponseSchema).describe('Values created alongside the attribute'),
+});
+
+export const createAttributeCombinationParamsSchema = z.object({
+  id: z.coerce.number().int().positive('Product id must be a positive integer'),
+});
+
+export const createAttributeCombinationBodySchema = z.object({
+  computedPrice: z.coerce.number({ error: 'Computed price must be a number' }).min(0, 'Computed price must be zero or greater').optional(),
+  sku: z.string().min(5, 'SKU must be at least 5 characters when provided').max(100).optional(),
+  availability: z.enum(availabilityEnum.enumValues).default('IN_STOCK'),
+  isDefault: z.boolean().default(false),
+  overridePrice: z.coerce.number({ error: 'Override price must be a number' }).min(0, 'Override price must be zero or greater').optional(),
+  values: z.array(z.number().int().positive('Attribute value ids must be positive integers')).default([]),
+});
+
+export const computeAttributeCombinationPriceBodySchema = z.object({
+  values: z.array(z.number().int().positive('Attribute value ids must be positive integers')).min(1, 'At least one attribute value is required'),
+});
+
+export const computeAttributeCombinationPriceResponseSchema = z.object({
+  basePrice: z.number().describe('Base product price'),
+  computedPrice: z.number().describe('Base product price plus the sum of the price adjustments of the selected attribute values'),
+  values: z
+    .array(
+      z.object({
+        attributeName: z.string().describe('Name of the attribute the value belongs to'),
+        name: z.string().describe('Attribute value name'),
+        priceAdjustment: z.number().describe('Price adjustment contributed by this value'),
+      })
+    )
+    .describe('Selected attribute values with their price adjustments'),
+});
+
+export const attributeCombinationResponseSchema = createSelectSchema(attributeCombinations).omit({ valueSignature: true });
+
+export const createAttributeCombinationResponseSchema = attributeCombinationResponseSchema.extend({
+  values: z.string().describe('Human-readable combination label built from the selected attribute values, e.g. "Color: Red, Size: S"'),
+  computedPrice: z.number().nullable().describe('Computed price echoed from the request, or null when an override price is set'),
 });

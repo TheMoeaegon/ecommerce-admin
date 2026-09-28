@@ -362,47 +362,26 @@ export const productAttributeValues = pgTable(
   ]
 );
 
-export const productAttributeValueMedia = pgTable(
-  'product_attribute_value_media',
-  {
-    id: t.serial('id').primaryKey(),
-    productAttributeValueId: t.integer('product_attribute_value_id').notNull(),
-    productMediaId: t.integer('product_media_id').notNull(),
-    displayOrder: t.integer('display_order').notNull().default(0),
-  },
-  table => [
-    t.check('product_attribute_value_media_display_order_non_negative', sql`${table.displayOrder} >= 0`),
-    t.unique('product_attributes_value_id_product_media_id_unique').on(table.productAttributeValueId, table.productMediaId),
-    t
-      .foreignKey({
-        columns: [table.productAttributeValueId],
-        foreignColumns: [productAttributeValues.id],
-        name: 'fk_product_attribute_value_media_value_id_product_attribute_values',
-      })
-      .onDelete('cascade'),
-    t
-      .foreignKey({
-        columns: [table.productMediaId],
-        foreignColumns: [productMedia.id],
-        name: 'fk_product_attribute_value_media_media_id_product_media',
-      })
-      .onDelete('cascade'),
-  ]
-);
-
 export const attributeCombinations = pgTable(
   'attribute_combinations',
   {
     id: t.serial('id').primaryKey(),
     productId: t.integer('product_id').notNull(),
-    sku: t.varchar('sku', { length: 100 }).notNull(),
+    valueSignature: t.text('value_signature').notNull().default(''),
+    sku: t.varchar('sku', { length: 100 }),
     availability: availabilityEnum('availability').notNull().default('IN_STOCK'),
+    isDefault: t.boolean('is_default').notNull().default(false),
     overridePrice: t.numeric('override_price', { precision: 12, scale: 2 }),
     createdAt: t.timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: t.timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   table => [
+    t.unique('attribute_combinations_product_id_signature_unique').on(table.productId, table.valueSignature),
     t.unique('attribute_combinations_product_id_sku_unique').on(table.productId, table.sku),
+    t
+      .uniqueIndex('attribute_combinations_one_default_per_product')
+      .on(table.productId)
+      .where(sql`${table.isDefault}`),
     t.check('attribute_combinations_override_price_non_negative', sql`${table.overridePrice} IS NULL OR ${table.overridePrice} >= 0`),
     t
       .foreignKey({
@@ -421,19 +400,19 @@ export const attributeCombinationValues = pgTable(
     productAttributeValueId: t.integer('product_attribute_value_id').notNull(),
   },
   table => [
-    primaryKey({ columns: [table.attributeCombinationId, table.productAttributeValueId] }),
+    primaryKey({ columns: [table.attributeCombinationId, table.productAttributeValueId], name: 'attribute_combination_values_pkey' }),
     t
       .foreignKey({
         columns: [table.attributeCombinationId],
         foreignColumns: [attributeCombinations.id],
-        name: 'fk_attribute_combination_values_combination_id_attribute_combinations',
+        name: 'fk_attribute_combination_values_combination_id',
       })
       .onDelete('cascade'),
     t
       .foreignKey({
         columns: [table.productAttributeValueId],
         foreignColumns: [productAttributeValues.id],
-        name: 'fk_attribute_combination_values_value_id_product_attribute_values',
+        name: 'fk_attribute_combination_values_value_id',
       })
       .onDelete('cascade'),
   ]
@@ -453,7 +432,7 @@ export const attributeCombinationMedia = pgTable(
       .foreignKey({
         columns: [table.attributeCombinationId],
         foreignColumns: [attributeCombinations.id],
-        name: 'fk_attribute_combination_media_combination_id_attribute_combinations',
+        name: 'fk_attribute_combination_media_combination_id',
       })
       .onDelete('cascade'),
     t

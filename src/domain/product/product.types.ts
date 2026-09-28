@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 import type {
   attachProductMediaResponseSchema,
+  computeAttributeCombinationPriceResponseSchema,
+  createAttributeCombinationBodySchema,
+  createAttributeCombinationResponseSchema,
   createProductAttributeBodySchema,
   createProductAttributeResponseSchema,
   createProductAttributeValueBodySchema,
@@ -10,7 +13,7 @@ import type {
   updateProductMediaBodySchema,
   updateProductMediaResponseSchema,
 } from './product.schema.ts';
-import type { productAttributeValues, productAttributes, products } from '../../db/schema.ts';
+import type { attributeCombinationValues, attributeCombinations, productAttributeValues, productAttributes, products } from '../../db/schema.ts';
 
 export type CreateProductDTO = z.infer<typeof createProductBodySchema>;
 export type CreateProductResponse = z.infer<typeof createProductResponseSchema>;
@@ -24,6 +27,10 @@ export type CreateProductAttributeDTO = z.infer<typeof createProductAttributeBod
 export type CreateProductAttributeValueDTO = z.infer<typeof createProductAttributeValueBodySchema>;
 export type CreateProductAttributeResponse = z.infer<typeof createProductAttributeResponseSchema>;
 
+export type CreateAttributeCombinationDTO = z.infer<typeof createAttributeCombinationBodySchema>;
+export type CreateAttributeCombinationResponse = z.infer<typeof createAttributeCombinationResponseSchema>;
+export type ComputeAttributeCombinationPriceResponse = z.infer<typeof computeAttributeCombinationPriceResponseSchema>;
+
 export type NewProduct = typeof products.$inferInsert;
 export type Product = typeof products.$inferSelect;
 
@@ -31,3 +38,8 @@ export type NewProductAttribute = typeof productAttributes.$inferInsert;
 export type ProductAttribute = typeof productAttributes.$inferSelect;
 export type NewProductAttributeValue = typeof productAttributeValues.$inferInsert;
 export type ProductAttributeValue = typeof productAttributeValues.$inferSelect;
+
+export type NewAttributeCombination = typeof attributeCombinations.$inferInsert;
+export type AttributeCombination = typeof attributeCombinations.$inferSelect;
+export type NewAttributeCombinationValue = typeof attributeCombinationValues.$inferInsert;
+export type AttributeCombinationValue = typeof attributeCombinationValues.$inferSelect;

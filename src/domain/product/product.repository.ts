@@ -31,6 +31,16 @@ export async function insert(payload: NewProduct, executor: DB = db): Promise<Pr
   }
 }
 
+export async function findBasePrice(productId: number, executor: DB = db): Promise<string | undefined> {
+  const [product] = await executor.select({ price: products.price }).from(products).where(eq(products.id, productId));
+  return product?.price;
+}
+
+export async function existsById(productId: number, executor: DB = db): Promise<boolean> {
+  const [product] = await executor.select({ id: products.id }).from(products).where(eq(products.id, productId));
+  return product !== undefined;
+}
+
 export async function findByIdWithMedia(productId: number, executor: DB = db) {}
 
 // ------------------------------ Categories ------------------------------ //

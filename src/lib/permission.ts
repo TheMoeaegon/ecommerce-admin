@@ -2,7 +2,7 @@ import { defaultStatements } from 'better-auth/plugins/admin/access';
 
 export const statement = {
   ...defaultStatements,
-  product: ['create', 'update', 'delete'],
+  product: ['create', 'update', 'delete', 'view'],
   role: ['create', 'update', 'delete', 'view'],
 } as const;
 
